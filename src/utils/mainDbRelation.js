@@ -15,6 +15,7 @@ const default_page = require("../api/default_page/models/default_page");
 const fcm_configuration = require("../api/fcm_configuration/models/fcm_configuration");
 const free_plan = require("../api/free_plan/models/free_plan");
 const custom_courier = require("../api/custom_courier/models/custom_courier");
+const address = require("../api/address/models/address");
 
 // Import the Activity_log model
 const activity_log = require("../api/activity_log/models/activity_log");
@@ -40,6 +41,7 @@ module.exports = async (sequelize) => {
   db.Free_plan = free_plan(sequelize);
   db.Activity_log = activity_log(sequelize);
   db.Custom_courier = custom_courier(sequelize);
+  db.Address = address(sequelize);
 
   // User -> Role
   db.Role.hasMany(db.User, { foreignKey: "RoleId", as: "users" });
@@ -79,6 +81,12 @@ module.exports = async (sequelize) => {
     foreignKey: "SubscriptionId",
     as: "subscription",
   });
+
+  db.User.hasMany(db.Address, {
+    foreignKey: "UserId",
+    as: "addresses",
+  });
+  db.Address.belongsTo(db.User, { foreignKey: "UserId", as: "user" });
 
   return db.sequelize;
 };

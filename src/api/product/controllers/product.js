@@ -1,264 +1,284 @@
-const { getPagination, getMeta } = require('../../../services/pagination');
-const { requestError } = require('../../../services/errors');
-const { Op, literal, or } = require('sequelize');
-const blukTag = require('../services/blukTag');
-const orderBy = require('../../../services/orderBy');
-
+const { getPagination, getMeta } = require("../../../services/pagination");
+const { requestError } = require("../../../services/errors");
+const { Op, literal, or } = require("sequelize");
+const blukTag = require("../services/blukTag");
+const orderBy = require("../../../services/orderBy");
 
 exports.create = async (req, res) => {
-    try {
+  try {
+    const sequelize = req.db;
+    const body = req.body;
+    const variants = body.variants;
+    // creating product
+    const product = await sequelize.models.Product.create({
+      name: body.name,
+      description: body.description,
+      CategoryId: body.CategoryId,
+      CollectionId: body.CollectionId,
+      CollectionStaticId: body.CollectionStaticId,
+      ThumbnailId: body.ThumbnailId,
+    });
 
-        const sequelize = req.db;
-        const body = req.body
-        const variants = body.variants;
-        // creating product
-        const product = await sequelize.models.Product.create({
-            "name": body.name,
-            "description": body.description,
-            "CategoryId": body.CategoryId,
-            "CollectionId": body.CollectionId,
-            "ThumbnailId": body.ThumbnailId
-        })
-
-        // creating variants
-        let variantArray = []
-        for (const variant of variants) {
-            variantArray.push(
-                {
-                    "name": variant.name,
-                    "price": variant.price,
-                    "quantity": variant.quantity,
-                    "ProductId": product.id,
-                    "from": variant.from,
-                    "to": variant.to,
-                    "ThumbnailId": variant.ThumbnailId
-                }
-            )
-        }
-        const createdVariants = await sequelize.models.Variant.bulkCreate(variantArray)
-
-        const tags = body.tags;
-        // creating tags
-        let createdTags
-        if (tags.length > 0) {
-            createdTags = await blukTag({ sequelize, tags, ProductId: product.id })
-        }
-        return res.status(200).send({ message: "Product and variants created successfully!", data: { product, variants: createdVariants, tags: createdTags || null } })
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Failed to create a product' });
+    // creating variants
+    let variantArray = [];
+    for (const variant of variants) {
+      variantArray.push({
+        name: variant.name,
+        price: variant.price,
+        quantity: variant.quantity,
+        ProductId: product.id,
+        from: variant.from,
+        to: variant.to,
+        ThumbnailId: variant.ThumbnailId,
+      });
     }
+    const createdVariants = await sequelize.models.Variant.bulkCreate(
+      variantArray
+    );
+
+    const tags = body.tags;
+    // creating tags
+    let createdTags;
+    if (tags.length > 0) {
+      createdTags = await blukTag({ sequelize, tags, ProductId: product.id });
+    }
+    return res
+      .status(200)
+      .send({
+        message: "Product and variants created successfully!",
+        data: { product, variants: createdVariants, tags: createdTags || null },
+      });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to create a product" });
+  }
 };
 
-
 exports.find = async (req, res) => {
-    try {
-        const sequelize = req.db;
-        const query = req.query;
-        const pagination = await getPagination(query.pagination);
-        const order = orderBy(query)
-        const products = await sequelize.models.Product.findAndCountAll({
-            offset: pagination.offset,
-            limit: pagination.limit,
-            order: order,
-            distinct: true,
-            include: [
-                {
-                    model: sequelize.models.Variant,
-                    as: 'variants',
-                    include: ["thumbnail"]
-                },
-                {
-                    model: sequelize.models.Media,
-                    as: 'thumbnail',
-                },
-                {
-                    model: sequelize.models.Category,
-                    as: 'category',
-                }, "tags"
-            ],
-        });
-        const meta = await getMeta(pagination, products.count)
-        return res.status(200).send({ data: products.rows, meta })
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Failed to fetch products' });
-    }
+  try {
+    const sequelize = req.db;
+    const query = req.query;
+    const pagination = await getPagination(query.pagination);
+    const order = orderBy(query);
+    const products = await sequelize.models.Product.findAndCountAll({
+      offset: pagination.offset,
+      limit: pagination.limit,
+      order: order,
+      distinct: true,
+      include: [
+        {
+          model: sequelize.models.Variant,
+          as: "variants",
+          include: ["thumbnail"],
+        },
+        {
+          model: sequelize.models.Media,
+          as: "thumbnail",
+        },
+        {
+          model: sequelize.models.Category,
+          as: "category",
+        },
+        "tags",
+      ],
+    });
+    const meta = await getMeta(pagination, products.count);
+    return res.status(200).send({ data: products.rows, meta });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch products" });
+  }
 };
 
 exports.findOne = async (req, res) => {
-    try {
-        const sequelize = req.db;
-        const { id } = req.params
-        const product = await sequelize.models.Product.findByPk(id, {
-            include: [
-                {
-                    model: sequelize.models.Variant,
-                    as: "variants",
-                    include: ["thumbnail"]
-                },
-                {
-                    model: sequelize.models.Category,
-                    as: "category",
-                },
-                "thumbnail", "tags"
-            ]
-        });
-        if (!product) {
-            return res.status(400).send(requestError({ message: "Invalid Id to fetch product" }))
-        }
-        return res.status(200).send(product)
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: "Failed to fetch product" });
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const product = await sequelize.models.Product.findByPk(id, {
+      include: [
+        {
+          model: sequelize.models.Variant,
+          as: "variants",
+          include: ["thumbnail"],
+        },
+        {
+          model: sequelize.models.Category,
+          as: "category",
+        },
+        "thumbnail",
+        "tags",
+      ],
+    });
+    if (!product) {
+      return res
+        .status(400)
+        .send(requestError({ message: "Invalid Id to fetch product" }));
     }
+    return res.status(200).send(product);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch product" });
+  }
 };
 
 exports.update = async (req, res) => {
-    try {
-        const sequelize = req.db;
-        const { id } = req.params
-        const getProduct = await sequelize.models.Product.findByPk(id)
-        if (getProduct) {
-            const product = await sequelize.models.Product.update(req.body, {
-                where: { id },
-                returning: true,
-            });
-            return res.status(200).send({ message: "product updated successfully!", data: product })
-        } else {
-            return res.status(400).send(requestError({ message: "Invalid Product ID", details: "Requested Product Id Does not exists" }))
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Failed to fetch product' });
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const getProduct = await sequelize.models.Product.findByPk(id);
+    if (getProduct) {
+      const product = await sequelize.models.Product.update(req.body, {
+        where: { id },
+        returning: true,
+      });
+      return res
+        .status(200)
+        .send({ message: "product updated successfully!", data: product });
+    } else {
+      return res
+        .status(400)
+        .send(
+          requestError({
+            message: "Invalid Product ID",
+            details: "Requested Product Id Does not exists",
+          })
+        );
     }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch product" });
+  }
 };
 
 exports.delete = async (req, res) => {
-    try {
-        const sequelize = req.db;
-        const { id } = req.params
-        const getProduct = await sequelize.models.Product.findByPk(id)
-        if (!getProduct) {
-            return res.status(400).send(requestError({ message: "Invalid Product ID" }))
-        }
-        const product = await sequelize.models.Product.destroy({ where: { id } })
-        return res.status(200).send({ message: "product deleted successfully!" })
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({ error: 'Failed to fetch product' });
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const getProduct = await sequelize.models.Product.findByPk(id);
+    if (!getProduct) {
+      return res
+        .status(400)
+        .send(requestError({ message: "Invalid Product ID" }));
     }
+    const product = await sequelize.models.Product.destroy({ where: { id } });
+    return res.status(200).send({ message: "product deleted successfully!" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch product" });
+  }
 };
 
 exports.search = async (req, res) => {
-    try {
-
-        const sequelize = req.db;
-        const query = req.query
-        const qs = query.qs.trim()
-        const tags = query?.tags?.toLowerCase().split("_");
-        const pagination = await getPagination(query.pagination)
-        const orderBy = (query.orderBy ? [Object.keys(query.orderBy)[0], query.orderBy.id] : ["id", "desc"])
-        const products = await sequelize.models.Product.findAndCountAll({
+  try {
+    const sequelize = req.db;
+    const query = req.query;
+    const qs = query.qs.trim();
+    const tags = query?.tags?.toLowerCase().split("_");
+    const pagination = await getPagination(query.pagination);
+    const orderBy = query.orderBy
+      ? [Object.keys(query.orderBy)[0], query.orderBy.id]
+      : ["id", "desc"];
+    const products = await sequelize.models.Product.findAndCountAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${qs}%` } },
+          { description: { [Op.iLike]: `%${qs}%` } },
+          // code to search in variant
+          literal(
+            `EXISTS (SELECT * FROM "Variants" AS "variants" WHERE "Product"."id" = "variants"."ProductId" AND "variants"."name" ILIKE '%${qs}%')`
+          ),
+        ],
+      },
+      order: [orderBy],
+      offset: pagination.offset,
+      limit: pagination.limit,
+      distinct: true,
+      include: [
+        {
+          model: sequelize.models.Variant,
+          as: "variants",
+          where: {
+            [Op.or]: [{ name: { [Op.iLike]: `%${qs}%` } }],
+          },
+          include: ["thumbnail"],
+        },
+        {
+          model: sequelize.models.Media,
+          as: "thumbnail",
+        },
+        {
+          model: sequelize.models.Category,
+          as: "category",
+        },
+        {
+          model: sequelize.models.Tag,
+          as: "tags",
+          ...(query.tags && {
             where: {
-                [Op.or]: [
-                    { name: { [Op.iLike]: `%${qs}%` } },
-                    { description: { [Op.iLike]: `%${qs}%` } },
-                    // code to search in variant
-                    literal(`EXISTS (SELECT * FROM "Variants" AS "variants" WHERE "Product"."id" = "variants"."ProductId" AND "variants"."name" ILIKE '%${qs}%')`),
-                ]
+              name: {
+                [Op.iLike]: { [Op.any]: tags.map((item) => `%${item}%`) },
+              },
             },
-            order: [orderBy],
-            offset: pagination.offset,
-            limit: pagination.limit,
-            distinct: true,
-            include: [
-                {
-                    model: sequelize.models.Variant,
-                    as: 'variants',
-                    where: {
-                        [Op.or]: [
-                            { name: { [Op.iLike]: `%${qs}%` } },
-                        ]
-                    },
-                    include: ["thumbnail"]
-                },
-                {
-                    model: sequelize.models.Media,
-                    as: 'thumbnail',
-                },
-                {
-                    model: sequelize.models.Category,
-                    as: 'category',
-                },
-                {
-                    model: sequelize.models.Tag,
-                    as: "tags",
-                    ...(query.tags && {
-                        where: {
-                            name: {
-                                [Op.iLike]: { [Op.any]: tags.map(item => `%${item}%`), },
-                            },
-                        }
-                    })
-                }
-            ],
-        });
-        const meta = await getMeta(pagination, products.count)
-        return res.status(200).send({ data: products.rows, meta })
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send(error);
-    }
+          }),
+        },
+      ],
+    });
+    const meta = await getMeta(pagination, products.count);
+    return res.status(200).send({ data: products.rows, meta });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send(error);
+  }
 };
 exports.findByPrice = async (req, res) => {
-    try {
-        const sequelize = req.db;
-        const query = req.query;
-        const pagination = await getPagination(query.pagination);
-        const orderBy = (query.orderBy ? [Object.keys(query.orderBy)[0], query.orderBy.id] : ["id", "desc"]);
-        const price = query.price;
-        const products = await sequelize.models.Product.findAndCountAll({
-
-            offset: pagination.offset,
-            limit: pagination.limit,
-            order: [orderBy],
-            distinct: true,
-            include: [
-                {
-                    model: sequelize.models.Variant,
-                    as: 'variants',
-                    include: ["thumbnail"],
-                    where: {
-                        [Op.and]: [
-                            {
-                                price: {
-                                    [Op.gte]: price.min
-                                }
-                            },
-                            {
-                                price: {
-                                    [Op.lte]: price.max
-                                }
-                            }
-                        ]
-                    },
+  try {
+    const sequelize = req.db;
+    const query = req.query;
+    const pagination = await getPagination(query.pagination);
+    const orderBy = query.orderBy
+      ? [Object.keys(query.orderBy)[0], query.orderBy.id]
+      : ["id", "desc"];
+    const price = query.price;
+    const products = await sequelize.models.Product.findAndCountAll({
+      offset: pagination.offset,
+      limit: pagination.limit,
+      order: [orderBy],
+      distinct: true,
+      include: [
+        {
+          model: sequelize.models.Variant,
+          as: "variants",
+          include: ["thumbnail"],
+          where: {
+            [Op.and]: [
+              {
+                price: {
+                  [Op.gte]: price.min,
                 },
-                {
-                    model: sequelize.models.Media,
-                    as: 'thumbnail',
+              },
+              {
+                price: {
+                  [Op.lte]: price.max,
                 },
-                {
-                    model: sequelize.models.Category,
-                    as: 'category',
-                }, "tags"
+              },
             ],
-        });
-        const meta = await getMeta(pagination, products.count)
-        return res.status(200).send({ data: products.rows, meta })
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send(error)
-    }
-}
-
+          },
+        },
+        {
+          model: sequelize.models.Media,
+          as: "thumbnail",
+        },
+        {
+          model: sequelize.models.Category,
+          as: "category",
+        },
+        "tags",
+      ],
+    });
+    const meta = await getMeta(pagination, products.count);
+    return res.status(200).send({ data: products.rows, meta });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(error);
+  }
+};

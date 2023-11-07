@@ -32,4 +32,6 @@ require("../api/tutorial/routes/tutorial")(app);
 require("../api/activity_log/routes/activity_log")(app);
 require("../api/bulk_pricing/routes/bulk_pricing")(app);
 require("../api/collection/routes/collection")(app);
+require("../api/address/routes/address")(app);
+require("../api/collection_static/routes/collection_static")(app);
 // require("../api/custom_courier/routes/custom_courier")(app);

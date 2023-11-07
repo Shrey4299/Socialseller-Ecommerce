@@ -18,6 +18,7 @@ const campaign = require("../api/campaign/models/campaign");
 const tutorial = require("../api/tutorial/models/tutorial");
 const bulkPricing = require("../api/bulk_pricing/models/bulk_pricing");
 const collection = require("../api/collection/models/collection");
+const collection_static = require("../api/collection_static/models/collection_static");
 
 // const services = require("../api/product/services/services")
 
@@ -45,6 +46,7 @@ module.exports = async (sequelize) => {
   db.Tutorial = tutorial(sequelize);
   db.Bulk_pricing = bulkPricing(sequelize);
   db.Collection = collection(sequelize);
+  db.Collection_static = collection_static(sequelize);
 
   // ++++++ RELATIONS ++++++
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
@@ -93,6 +95,16 @@ module.exports = async (sequelize) => {
   db.Product.belongsTo(db.Collection, {
     foreignKey: "CollectionId",
     as: "collection",
+  });
+
+  db.Collection_static.hasMany(db.Product, {
+    foreignKey: "CollectionStaticId",
+    as: "products",
+  });
+
+  db.Product.belongsTo(db.Collection_static, {
+    foreignKey: "CollectionStaticId",
+    as: "collection_static",
   });
 
   return db.sequelize;

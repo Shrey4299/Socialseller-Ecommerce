@@ -22,6 +22,7 @@ module.exports = (req, res, next) => {
     "tutorial",
     "bulk_pricing",
     "collection",
+    "collection_static",
   ];
   if (parts.length > 1) {
     // shared routes
@@ -62,6 +63,7 @@ module.exports = (req, res, next) => {
       "fcm_configuration",
       "free_plan",
       "activity_log",
+      "address",
     ];
 
     if (!mainRoutes.includes(api))
