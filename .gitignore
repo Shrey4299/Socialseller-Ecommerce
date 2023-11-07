@@ -1,0 +1,5 @@
+/node_modules
+
+# Exclude .zip files
+*.zip
+/public/uploads/*
