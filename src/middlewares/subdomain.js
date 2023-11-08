@@ -23,6 +23,7 @@ module.exports = (req, res, next) => {
     "bulk_pricing",
     "collection",
     "collection_static",
+    "product_metrics",
   ];
   if (parts.length > 1) {
     // shared routes
@@ -46,12 +47,14 @@ module.exports = (req, res, next) => {
     let api = req.url.split("?")[0].split("/")[2];
     let mainRoutes = [
       "users",
+      "user_metrics",
       "permissions",
       "roles",
       "admin",
       "subscriptions",
       "custom_courier",
       "plans",
+      "plan_metrics",
       "globals",
       "payment-logs",
       "support-tickets",
@@ -64,6 +67,7 @@ module.exports = (req, res, next) => {
       "free_plan",
       "activity_log",
       "address",
+      "groups",
     ];
 
     if (!mainRoutes.includes(api))

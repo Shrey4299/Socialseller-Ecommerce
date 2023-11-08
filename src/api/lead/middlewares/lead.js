@@ -1,34 +1,50 @@
-
-// Middleware for lead
-// Customize the middleware code here
-
-/**
- * 
- * @param {import("express").Request} req 
- * @param {import("express").Response} res 
- */
-
-// write code below
-
-
-const Joi = require("joi")
+const Joi = require("joi");
 
 module.exports = {
-    async validateRequest(req, res, next) {
+  async validateRequest(req, res, next) {
+    function validate(body) {
+      const JoiSchema = Joi.object({
+        name: Joi.string().required(),
+        phone: Joi.string().required(),
+        country_code: Joi.string().required(),
+        status: Joi.string()
+          .valid(
+            "NEW",
+            "ASSIGNED",
+            "CALLING",
+            "CALLED",
+            "CONVERTED",
+            "COMPLETED"
+          )
+          .required(),
+        source: Joi.string()
+          .valid(
+            "WHATSAPP",
+            "INSTAGRAM",
+            "SOCIAL_SELLER_WEBSITE",
+            "YOUTUBE_CHANNEL",
+            "APP",
+            "WEBSITE"
+          )
+          .required(),
+        consumer_note: Joi.string(), // Adjust validation as needed
+        staff_note: Joi.string(), // Adjust validation as needed
+        quantity: Joi.number().integer().min(0), // Adjust validation as needed
+      });
 
-        function validate(body) {
-            const JoiSchema = Joi.object({
-                "name": Joi.string().required(),
-                "phone": Joi.string().required(),
-                "email": Joi.string().required(),
-            });
-
-            return JoiSchema.validate(body);
-        }
-
-        let result = validate(req.body);
-        if (result.error) return res.status(400).send(requestError({ message: result.error.message, details: result.error.details }))
-        else await next(); // Corrected the square brackets to curly braces
-
+      return JoiSchema.validate(body);
     }
-}
+
+    let result = validate(req.body);
+    if (result.error)
+      return res
+        .status(400)
+        .send(
+          requestError({
+            message: result.error.message,
+            details: result.error.details,
+          })
+        );
+    else await next();
+  },
+};

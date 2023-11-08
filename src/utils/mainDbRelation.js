@@ -16,6 +16,9 @@ const fcm_configuration = require("../api/fcm_configuration/models/fcm_configura
 const free_plan = require("../api/free_plan/models/free_plan");
 const custom_courier = require("../api/custom_courier/models/custom_courier");
 const address = require("../api/address/models/address");
+const group = require("../api/group/models/group");
+const plan_metrics = require("../api/plan_metrics/models/plan_metrics"); // Added Plan_metrics
+const user_metrics = require("../api/user_metrics/models/user_metrics"); // Added Plan_metrics
 
 // Import the Activity_log model
 const activity_log = require("../api/activity_log/models/activity_log");
@@ -42,6 +45,9 @@ module.exports = async (sequelize) => {
   db.Activity_log = activity_log(sequelize);
   db.Custom_courier = custom_courier(sequelize);
   db.Address = address(sequelize);
+  db.Group = group(sequelize);
+  db.Plan_metrics = plan_metrics(sequelize); 
+  db.User_metrics = user_metrics(sequelize); 
 
   // User -> Role
   db.Role.hasMany(db.User, { foreignKey: "RoleId", as: "users" });
@@ -87,6 +93,19 @@ module.exports = async (sequelize) => {
     as: "addresses",
   });
   db.Address.belongsTo(db.User, { foreignKey: "UserId", as: "user" });
+
+  db.Plan_metrics.belongsTo(db.Plan, { foreignKey: "PlanId", as: "plan" });
+  db.Plan.hasOne(db.Plan_metrics, { foreignKey: "PlanId", as: "plan_metrics" });
+
+  db.User_metrics.belongsTo(db.User, {
+    foreignKey: "UserId",
+    as: "user",
+  });
+
+  db.User.hasOne(db.User_metrics, {
+    foreignKey: "UserId",
+    as: "user_metrics",
+  });
 
   return db.sequelize;
 };

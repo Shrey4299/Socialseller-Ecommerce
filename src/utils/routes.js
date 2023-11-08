@@ -1,6 +1,7 @@
 const app = require("../../server");
 
 require("../api/user/routes/user")(app);
+require("../api/user_metrics/routes/user_metrics")(app);
 require("../api/product/routes/product")(app);
 require("../api/variant/routes/variant")(app);
 require("../api/upload/routes/upload")(app);
@@ -33,5 +34,8 @@ require("../api/activity_log/routes/activity_log")(app);
 require("../api/bulk_pricing/routes/bulk_pricing")(app);
 require("../api/collection/routes/collection")(app);
 require("../api/address/routes/address")(app);
+require("../api/group/routes/group")(app);
+require("../api/plan_metrics/routes/plan_metrics")(app);
 require("../api/collection_static/routes/collection_static")(app);
+require("../api/product_metrics/routes/product_metrics")(app);
 // require("../api/custom_courier/routes/custom_courier")(app);

@@ -19,6 +19,7 @@ const tutorial = require("../api/tutorial/models/tutorial");
 const bulkPricing = require("../api/bulk_pricing/models/bulk_pricing");
 const collection = require("../api/collection/models/collection");
 const collection_static = require("../api/collection_static/models/collection_static");
+const product_metrics = require("../api/product_metrics/models/product_metrics"); // Added Plan_metrics
 
 // const services = require("../api/product/services/services")
 
@@ -47,6 +48,7 @@ module.exports = async (sequelize) => {
   db.Bulk_pricing = bulkPricing(sequelize);
   db.Collection = collection(sequelize);
   db.Collection_static = collection_static(sequelize);
+  db.Product_metrics = product_metrics(sequelize); // Added Plan_metrics
 
   // ++++++ RELATIONS ++++++
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
@@ -105,6 +107,26 @@ module.exports = async (sequelize) => {
   db.Product.belongsTo(db.Collection_static, {
     foreignKey: "CollectionStaticId",
     as: "collection_static",
+  });
+
+  db.Lead.hasOne(db.Product, {
+    foreignKey: "LeadId", // This is the foreign key that will be dded to the Product model
+    as: "product", // Alias to access the associated produc
+  });
+
+  db.Product.belongsTo(db.Lead, {
+    foreignKey: "LeadId", // This should match the foreign key defned in db.Lead.hasOne
+    as: "lead", // Alias to access the associated lead
+  });
+
+  db.Product_metrics.belongsTo(db.Product, {
+    foreignKey: "ProductId",
+    as: "product",
+  });
+
+  db.Product.hasOne(db.Product_metrics, {
+    foreignKey: "ProductId", // Assuming there is a PlanId in Product_metrics model
+    as: "product_metrics",
   });
 
   return db.sequelize;
