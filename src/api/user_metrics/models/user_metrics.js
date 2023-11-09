@@ -1,48 +1,41 @@
-// models/mainDbModels/User.js
-const { Sequelize, DataTypes, } = require('sequelize');
-
-
+// models/user_metrics.js
+const { Sequelize, DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-    const User = sequelize.define('User', {
-        username: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true,
-            require: true
-        },
-        email: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true,
-            require: true
-        },
-        password: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        port: {
-            type: DataTypes.INTEGER,
-            allowNull: true
-        },
-        database: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        host: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        db_username: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        subdomain: {
-            type: DataTypes.STRING,
-            allowNull: true,
-            unique: true
-        },
+  const User_metrics = sequelize.define("User_metrics", {
+    UserId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    login_count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    registration_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    last_login_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    subscription_status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
+    total_spendings: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  });
 
-    });
-    return User
+  return User_metrics;
 };

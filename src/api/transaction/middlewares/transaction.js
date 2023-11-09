@@ -1,3 +1,5 @@
+// middlewares/transactionMiddleware.js
+
 const Joi = require("joi");
 const { requestError } = require("../../../services/errors");
 
@@ -5,14 +7,15 @@ module.exports = {
   async validateRequest(req, res, next) {
     function validate(body) {
       const JoiSchema = Joi.object({
-        name: Joi.string(),
-        logo: Joi.string().uri(), // Assuming logo is stored as a URL
-        tagline: Joi.string(),
-        whatsapp_number: Joi.string(), // Validate phone number format
-        calling_number: Joi.string(), // Validate phone number format
-        email: Joi.string().email(),
-        address: Joi.string(),
-        about_us: Joi.string(),
+        purpose: Joi.string()
+          .valid("PURCHASE", "REFUND", "ADDED_TO_WALLET")
+          .required(),
+        UserId: Joi.number().integer().required(),
+        txn_type: Joi.string().valid("DEBIT", "CREDIT").required(),
+        txn_id: Joi.string().required(),
+        remark: Joi.string().required(),
+        mode: Joi.string().valid("WALLET", "MONEY").required(),
+        amount: Joi.number().required(),
       });
 
       return JoiSchema.validate(body);

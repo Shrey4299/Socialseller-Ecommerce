@@ -68,6 +68,8 @@ module.exports = (req, res, next) => {
       "activity_log",
       "address",
       "groups",
+      "wallets",
+      "transactions",
     ];
 
     if (!mainRoutes.includes(api))

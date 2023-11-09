@@ -1,10 +1,13 @@
-// src/api/global_brand/globalBrandRoutes.js
 const router = require("express").Router();
 const globalBrandController = require("../controllers/global_brand");
+const globalBrandMiddleware = require("../middlewares/global_brand"); // Require the middleware
 
-// Define routes for the "Global_brand" resource
 module.exports = (app) => {
-  router.post("/", globalBrandController.create);
+  router.post(
+    "/",
+    globalBrandMiddleware.validateRequest,
+    globalBrandController.create
+  );
   router.get("/", globalBrandController.find);
 
   app.use("/api/global_brands", router);

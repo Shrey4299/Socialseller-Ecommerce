@@ -42,6 +42,27 @@ exports.findOne = async (req, res) => {
 };
 
 /**
+ * Get a specific transaction by ID.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.find = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const transaction = await sequelize.models.Transaction.findAll();
+
+    if (!transaction) {
+      return res.status(404).send({ error: "Transaction not found" });
+    }
+
+    return res.status(200).send({ data: transaction });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch transaction" });
+  }
+};
+
+/**
  * Update a transaction by ID.
  * @param {import("express").Request} req
  * @param {import("express").Response} res

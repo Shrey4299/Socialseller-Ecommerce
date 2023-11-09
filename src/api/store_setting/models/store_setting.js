@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "Store_setting",
     {
       store_mode: {
-        type: DataTypes.ENUM(["Mode1", "Mode2", "Mode3"]), // Replace with actual modes
+        type: DataTypes.ENUM(["WHATSAPP", "B2B", "ECOM", "RESELLER_ECOM"]),
       },
       primary_color: {
         type: DataTypes.STRING,
@@ -47,10 +47,10 @@ module.exports = (sequelize) => {
         type: DataTypes.BOOLEAN,
       },
       product_card_style: {
-        type: DataTypes.ENUM(["Style1", "Style2", "Style3"]), // Replace with actual styles
+        type: DataTypes.ENUM(["PORTRAIT", "SQUARE"]),
       },
       category_card_style: {
-        type: DataTypes.ENUM(["Style1", "Style2", "Style3"]), // Replace with actual styles
+        type: DataTypes.ENUM(["LANDSCAPE", "SQUARE"]),
       },
       product_list_span_mobile: {
         type: DataTypes.INTEGER,

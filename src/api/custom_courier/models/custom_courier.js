@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const CustomerCourier = sequelize.define("Customer_courier", {
+  const Customer_courier = sequelize.define("Customer_courier", {
     image: {
       type: DataTypes.STRING, // Assuming you're storing the image path as a string
       allowNull: true,
@@ -24,7 +24,5 @@ module.exports = (sequelize) => {
     },
   });
 
-
-
-  return CustomerCourier;
+  return Customer_courier;
 };

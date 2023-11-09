@@ -38,4 +38,6 @@ require("../api/group/routes/group")(app);
 require("../api/plan_metrics/routes/plan_metrics")(app);
 require("../api/collection_static/routes/collection_static")(app);
 require("../api/product_metrics/routes/product_metrics")(app);
-// require("../api/custom_courier/routes/custom_courier")(app);
+require("../api/custom_courier/routes/custom_courier")(app);
+require("../api/wallet/routes/wallet")(app);
+require("../api/transaction/routes/transaction")(app);

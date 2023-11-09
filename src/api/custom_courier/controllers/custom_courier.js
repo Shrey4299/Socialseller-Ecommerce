@@ -1,7 +1,7 @@
 exports.create = async (req, res) => {
   try {
     const sequelize = req.db;
-    const customerCourier = await sequelize.models.Custom_courier.create(
+    const customerCourier = await sequelize.models.Customer_courier.create(
       req.body
     );
     return res.status(200).send({
@@ -19,7 +19,7 @@ exports.update = async (req, res) => {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
     const [updatedRowsCount, updatedCustomerCourier] =
-      await sequelize.models.CustomerCourier.update(req.body, {
+      await sequelize.models.Customer_courier.update(req.body, {
         where: { id: customerCourierId },
         returning: true,
       });
@@ -41,7 +41,9 @@ exports.update = async (req, res) => {
 exports.findAll = async (req, res) => {
   try {
     const sequelize = req.db;
-    const customerCouriers = await sequelize.models.Custom_courier.findAll();
+
+    console.log(sequelize);
+    const customerCouriers = await sequelize.models.Customer_courier.findAll();
     return res.status(200).send(customerCouriers);
   } catch (error) {
     console.error(error);
@@ -53,9 +55,9 @@ exports.findOne = async (req, res) => {
   try {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
-    const customerCourier = await sequelize.models.CustomerCourier.findOne({
+    const customerCourier = await sequelize.models.Customer_courier.findOne({
       where: { id: customerCourierId },
-      include: "order_product",
+      include: "subscription",
     });
     if (!customerCourier) {
       return res.status(404).send({ error: "Customer Courier not found" });
@@ -73,7 +75,7 @@ exports.delete = async (req, res) => {
   try {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
-    const deletedRowCount = await sequelize.models.CustomerCourier.destroy({
+    const deletedRowCount = await sequelize.models.Customer_courier.destroy({
       where: { id: customerCourierId },
     });
     if (deletedRowCount === 0) {

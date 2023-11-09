@@ -19,9 +19,9 @@ const address = require("../api/address/models/address");
 const group = require("../api/group/models/group");
 const plan_metrics = require("../api/plan_metrics/models/plan_metrics"); // Added Plan_metrics
 const user_metrics = require("../api/user_metrics/models/user_metrics"); // Added Plan_metrics
-
-// Import the Activity_log model
 const activity_log = require("../api/activity_log/models/activity_log");
+const wallet = require("../api/wallet/models/wallet");
+const transaction = require("../api/transaction/models/transaction");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -46,8 +46,10 @@ module.exports = async (sequelize) => {
   db.Custom_courier = custom_courier(sequelize);
   db.Address = address(sequelize);
   db.Group = group(sequelize);
-  db.Plan_metrics = plan_metrics(sequelize); 
-  db.User_metrics = user_metrics(sequelize); 
+  db.Plan_metrics = plan_metrics(sequelize);
+  db.User_metrics = user_metrics(sequelize);
+  db.Wallet = wallet(sequelize);
+  db.Transaction = transaction(sequelize);
 
   // User -> Role
   db.Role.hasMany(db.User, { foreignKey: "RoleId", as: "users" });
@@ -105,6 +107,25 @@ module.exports = async (sequelize) => {
   db.User.hasOne(db.User_metrics, {
     foreignKey: "UserId",
     as: "user_metrics",
+  });
+
+  db.User.hasMany(db.Wallet, {
+    foreignKey: "UserId",
+    as: "wallets",
+  });
+
+  db.Wallet.belongsTo(db.Subscription, {
+    foreignKey: "SubscriptionId",
+    as: "subscription",
+  });
+
+  db.User.hasMany(db.Transaction, {
+    foreignKey: "UserId",
+    as: "transaction",
+  });
+  db.Transaction.belongsTo(db.User, {
+    foreignKey: "UserId",
+    as: "user",
   });
 
   return db.sequelize;

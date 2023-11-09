@@ -1,62 +1,32 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Store_setting = sequelize.define(
-    "Store_setting",
+  const Global_brand = sequelize.define(
+    "Global_brand",
     {
-      store_mode: {
-        type: DataTypes.ENUM(["Mode1", "Mode2", "Mode3"]), // Replace with actual modes
-      },
-      primary_color: {
+      name: {
         type: DataTypes.STRING,
       },
-      secondary_color: {
+      logo: {
+        type: DataTypes.STRING, // Assuming you store the file path or URL to the logo
+      },
+      tagline: {
         type: DataTypes.STRING,
       },
-      bg_color: {
+      whatsapp_number: {
         type: DataTypes.STRING,
       },
-      text_color: {
+      calling_number: {
         type: DataTypes.STRING,
       },
-      button_color: {
+      email: {
         type: DataTypes.STRING,
       },
-      is_app_enabled: {
-        type: DataTypes.BOOLEAN,
-      },
-      is_maintenance_mode: {
-        type: DataTypes.BOOLEAN,
-      },
-      is_store_active: {
-        type: DataTypes.BOOLEAN,
-      },
-      store_inactive_message: {
+      address: {
         type: DataTypes.TEXT,
       },
-      store_maintenance_message: {
+      about_us: {
         type: DataTypes.TEXT,
-      },
-      is_pricing_visible: {
-        type: DataTypes.BOOLEAN,
-      },
-      is_cart_enabled: {
-        type: DataTypes.BOOLEAN,
-      },
-      is_wallet_enabled: {
-        type: DataTypes.BOOLEAN,
-      },
-      product_card_style: {
-        type: DataTypes.ENUM(["Style1", "Style2", "Style3"]), // Replace with actual styles
-      },
-      category_card_style: {
-        type: DataTypes.ENUM(["Style1", "Style2", "Style3"]), // Replace with actual styles
-      },
-      product_list_span_mobile: {
-        type: DataTypes.INTEGER,
-      },
-      product_list_span_desktop: {
-        type: DataTypes.INTEGER,
       },
     },
     {
@@ -68,5 +38,5 @@ module.exports = (sequelize) => {
       ],
     }
   );
-  return Store_setting;
+  return Global_brand;
 };

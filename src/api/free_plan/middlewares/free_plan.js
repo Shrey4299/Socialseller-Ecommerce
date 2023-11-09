@@ -1,43 +1,20 @@
-// Middleware for global
-// Customize the middleware code here
-
-/**
- *
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- */
-
-// write code below
-
 const Joi = require("joi");
-const { requestError } = require("../../../services/errors");
 
 module.exports = {
-  async validateRequest(req, res, next) {
-    function validate(body) {
-      const JoiSchema = Joi.object({
-        RAZORPAY_KEY_ID: Joi.string().required(),
-        RAZORPAY_KEY_SECRET: Joi.string().required(),
-        RAZORPAY_WEBHOOK_SECRETE: Joi.string().required(),
-        PAYMENT_GATEWAY: Joi.string().required(),
-        GOOGLE_CLIENT_SECRET: Joi.string().required(),
-        GOOGLE_CLIENT_ID: Joi.string().required(),
-      });
+  validateFreePlan(req, res, next) {
+    const schema = Joi.object({
+      name: Joi.string().required(),
+      description: Joi.string().required(),
+      maxUsers: Joi.number().integer().required(),
+      maxProducts: Joi.number().integer().required(),
+      expiryDays: Joi.number().integer().required(),
+    });
 
-      return JoiSchema.validate(body);
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
     }
 
-    let result = validate(req.body);
-    if (result.error) {
-      return res.status(400).send(
-        requestError({
-          status: 400,
-          message: result.error.message,
-          details: result.error.details,
-        })
-      );
-    } else {
-      await next(); // Corrected the square brackets to curly braces
-    }
+    next();
   },
 };

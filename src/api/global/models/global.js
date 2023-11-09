@@ -4,30 +4,63 @@ module.exports = (sequelize) => {
   const Global = sequelize.define(
     "Global",
     {
-      RAZORPAY_KEY_ID: {
+      
+      subscriptionPrice: {
+        type: DataTypes.INTEGER,
+      },
+      codPrepaidAmount: {
+        type: DataTypes.INTEGER,
+      },
+      shippingPrice: {
+        type: DataTypes.INTEGER,
+      },
+      razorpayKey: {
         type: DataTypes.STRING,
       },
-      RAZORPAY_KEY_SECRET: {
+      razorpaySecret: {
         type: DataTypes.STRING,
       },
-      RAZORPAY_WEBHOOK_SECRETE: {
+      withdrawLimit: {
+        type: DataTypes.INTEGER,
+      },
+      razorpayXAccountNumber: {
         type: DataTypes.STRING,
       },
-      CASHFREE_KEY_ID: {
+      shiprocket_username: {
         type: DataTypes.STRING,
       },
-      CASHFREE_KEY_SECRET: {
-        // Updated field name
+      shiprocket_password: {
         type: DataTypes.STRING,
       },
-      PAYMENT_GATEWAY: {
-        type: DataTypes.ENUM(["RAZORPAY", "PHONEPE", "CASHFREE"]),
+      is_shiprocket_enabled: {
+        type: DataTypes.BOOLEAN,
       },
-      GOOGLE_CLIENT_ID: {
+      token: {
         type: DataTypes.STRING,
       },
-      GOOGLE_CLIENT_SECRET: {
+      selected_payment_gateway: {
+        type: DataTypes.ENUM("RAZORPAY", "CASHFREE", "PHONEPE", "NONE"),
+      },
+      cashfree_client_secret: {
         type: DataTypes.STRING,
+      },
+      cashfree_client_id: {
+        type: DataTypes.STRING,
+      },
+      phonepe_merchant_id: {
+        type: DataTypes.STRING,
+      },
+      phonepe_merchant_key: {
+        type: DataTypes.STRING,
+      },
+      phonepe_key_index: {
+        type: DataTypes.STRING,
+      },
+      firebase_auth: {
+        type: DataTypes.JSON,
+      },
+      user_verification_method: {
+        type: DataTypes.ENUM("FIREBASE", "MSG91"),
       },
     },
     {
