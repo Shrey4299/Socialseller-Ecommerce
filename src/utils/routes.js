@@ -41,3 +41,4 @@ require("../api/product_metrics/routes/product_metrics")(app);
 require("../api/custom_courier/routes/custom_courier")(app);
 require("../api/wallet/routes/wallet")(app);
 require("../api/transaction/routes/transaction")(app);
+require("../api/sub_category/routes/sub_category")(app);

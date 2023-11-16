@@ -21,6 +21,7 @@ const { razorpay } = require("../../../utils/gateway");
 const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
 const { token } = require("morgan");
+const { updatePlanMetrics } = require("../services/planMetricsHandler");
 
 /**
  *
@@ -267,7 +268,7 @@ exports.verify = async (req, res) => {
       );
       if (subscription) {
         const token =
-          "dDQ53sEPIHr6Wu5TUvxX5M:APA91bHlYmCT6Veoukmk_AozLrtYRegqhtPZIVHYtz8OeclbTp9jTTCrjuR20orkmAOa9P1yGom4hvfpPgOoDWOsHMr-XHhaftEYUKHfvdzI6oWxwhJrwM_4TuhJAQdD31YPewmC8kiP";
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzAwMDQ1ODI4LCJleHAiOjE3MDA2NTA2Mjh9.xSqEWq2mLmUJb8uG2tWUEfsFkoY6bX7GHxMWZU4Zzww";
         const message = {
           notification: {
             title: "Subscription Purchased successfullY!",
@@ -365,6 +366,12 @@ exports.createCashfreeOrder = async (req, res) => {
 
     const amount = Number((plan.price / 100) * 2) + Number(plan.price);
 
+    const planMetricsUpdateResult = await updatePlanMetrics(
+      sequelize,
+      plan_id, // PlanId (adjust accordingly)
+      amount // Revenue generated (adjust accordingly)
+    );
+
     const createSubscription = async () => {
       try {
         console.log("entered in create subscription");
@@ -435,6 +442,7 @@ exports.createCashfreeOrder = async (req, res) => {
 
 exports.verifyCashfree = async (req, res) => {
   try {
+    const sequelize = req.db;
     console.log("entered in verify cashfree");
     const orderId = req.query.order_id;
     const response = await axios.get(
@@ -463,6 +471,7 @@ exports.verifyCashfree = async (req, res) => {
 
       const sendMessage = await firebaseAdmin.messaging().send(message);
       console.log(sendMessage);
+
       return res
         .status(200)
         .send({ message: "Transaction Successful!", data: result });

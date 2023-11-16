@@ -19,14 +19,15 @@ const tutorial = require("../api/tutorial/models/tutorial");
 const bulkPricing = require("../api/bulk_pricing/models/bulk_pricing");
 const collection = require("../api/collection/models/collection");
 const collection_static = require("../api/collection_static/models/collection_static");
-const product_metrics = require("../api/product_metrics/models/product_metrics"); // Added Plan_metrics
-
-// const services = require("../api/product/services/services")
+const product_metrics = require("../api/product_metrics/models/product_metrics");
+const sub_category = require("../api/sub_category/models/sub_category");
+const contact_us = require("../api/contact_us/models/contact_us");
+const default_page = require("../api/default_page/models/default_page");
+const store_setting = require("../api/store_setting/models/store_setting");
+const group = require("../api/group/models/group");
 
 module.exports = async (sequelize) => {
-  // Product relations
   const db = {};
-  // services(sequelize)
   db.sequelize = sequelize;
 
   db.Product = product(sequelize);
@@ -42,13 +43,18 @@ module.exports = async (sequelize) => {
   db.Privacy_policy = privacy_policy(sequelize);
   db.Term_condition = term_condition(sequelize);
   db.Cart = cart(sequelize);
+  db.Contact_us = contact_us(sequelize);
   db.CartVariant = cart_variant(sequelize);
   db.Campaign = campaign(sequelize);
   db.Tutorial = tutorial(sequelize);
   db.Bulk_pricing = bulkPricing(sequelize);
   db.Collection = collection(sequelize);
   db.Collection_static = collection_static(sequelize);
-  db.Product_metrics = product_metrics(sequelize); // Added Plan_metrics
+  db.Product_metrics = product_metrics(sequelize);
+  db.Sub_category = sub_category(sequelize);
+  db.Default_page = default_page(sequelize);
+  db.Store_setting = store_setting(sequelize);
+  db.Group = group(sequelize);
 
   // ++++++ RELATIONS ++++++
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
@@ -127,6 +133,23 @@ module.exports = async (sequelize) => {
   db.Product.hasOne(db.Product_metrics, {
     foreignKey: "ProductId", // Assuming there is a PlanId in Product_metrics model
     as: "product_metrics",
+  });
+
+  db.Sub_category.belongsToMany(db.Product, {
+    through: "SubCategoryProduct",
+  });
+  db.Product.belongsToMany(db.Sub_category, {
+    through: "SubCategoryProduct",
+  });
+
+  // Category -> Sub Categories
+  db.Category.hasMany(db.Sub_category, {
+    foreignKey: "CategoryId",
+    as: "subCategories",
+  });
+  db.Sub_category.belongsTo(db.Category, {
+    foreignKey: "CategoryId",
+    as: "category",
   });
 
   return db.sequelize;

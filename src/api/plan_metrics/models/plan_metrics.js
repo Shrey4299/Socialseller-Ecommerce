@@ -7,7 +7,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     revenue_generated: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.FLOAT,
       allowNull: false,
     },
   });
