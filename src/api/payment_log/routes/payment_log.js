@@ -10,5 +10,5 @@ module.exports = (app) => {
     router.get('/:id', payment_logController.findOne);
     router.put('/:id', payment_logController.update);
     router.delete('/:id', payment_logController.delete);
-    app.use('/api/payment-logs', router)
+    app.use('/api/payment_logs', router)
 }

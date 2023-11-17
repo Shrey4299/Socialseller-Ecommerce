@@ -28,6 +28,10 @@ module.exports = (req, res, next) => {
     "default_pages",
     "store_setting",
     "groups",
+    "user_store",
+    "address",
+    "order",
+    "payment-logs",
   ];
   if (parts.length > 1) {
     // shared routes
@@ -68,7 +72,6 @@ module.exports = (req, res, next) => {
       "fcm_configuration",
       "free_plan",
       "activity_log",
-      "address",
       "wallets",
       "transactions",
     ];

@@ -25,6 +25,11 @@ const contact_us = require("../api/contact_us/models/contact_us");
 const default_page = require("../api/default_page/models/default_page");
 const store_setting = require("../api/store_setting/models/store_setting");
 const group = require("../api/group/models/group");
+const user_store = require("../api/user_store/models/user_store");
+const address = require("../api/address/models/address");
+const order = require("../api/order/models/order");
+const order_variant = require("../api/order/models/order_variant");
+const payment_log = require("../api/payment_log/models/payment_log");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -55,6 +60,11 @@ module.exports = async (sequelize) => {
   db.Default_page = default_page(sequelize);
   db.Store_setting = store_setting(sequelize);
   db.Group = group(sequelize);
+  db.User_store = user_store(sequelize);
+  db.Address = address(sequelize);
+  db.Order = order(sequelize);
+  db.Order_variant = order_variant(sequelize);
+  db.Payment_log = payment_log(sequelize);
 
   // ++++++ RELATIONS ++++++
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
@@ -151,6 +161,28 @@ module.exports = async (sequelize) => {
     foreignKey: "CategoryId",
     as: "category",
   });
+
+  db.User_store.hasMany(db.Address, {
+    foreignKey: "UserStoreId",
+    as: "addresses",
+  });
+  db.Address.belongsTo(db.User_store, {
+    foreignKey: "UserStoreId",
+    as: "userStore",
+  });
+
+  db.Order.belongsToMany(db.Variant, { through: "Order_variant" });
+  db.Variant.belongsToMany(db.Order, { through: "Order_variant" });
+
+  db.Order_variant.belongsTo(db.Order, { foreignKey: "OrderId", as: "order" });
+
+  db.Order_variant.belongsTo(db.Variant, {
+    foreignKey: "VariantId",
+    as: "variant",
+  });
+
+  db.User_store.hasOne(db.Order);
+  db.Order.belongsTo(db.User_store);
 
   return db.sequelize;
 };
