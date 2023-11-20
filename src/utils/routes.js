@@ -44,4 +44,3 @@ require("../api/transaction/routes/transaction")(app);
 require("../api/sub_category/routes/sub_category")(app);
 require("../api/user_store/routes/user_store")(app);
 require("../api/order/routes/order")(app);
-require("../api/order/routes/order")(app);

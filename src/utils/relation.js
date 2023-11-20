@@ -184,5 +184,15 @@ module.exports = async (sequelize) => {
   db.User_store.hasOne(db.Order);
   db.Order.belongsTo(db.User_store);
 
+  // db.User_store.hasOne(db.Cart, {
+  //   foreignKey: "UserStoreId",
+  //   as: "cart",
+  // });
+
+  db.Cart.belongsTo(db.User_store, {
+    foreignKey: "UserStoreId",
+    as: "userStore",
+  });
+
   return db.sequelize;
 };

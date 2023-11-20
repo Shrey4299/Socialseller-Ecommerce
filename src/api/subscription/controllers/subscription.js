@@ -479,8 +479,7 @@ exports.verifyCashfree = async (req, res) => {
       return res.status(400).send(
         requestError({
           message: "Bad Request!",
-          details:
-            "cashfree_signature and generated signature did not matched!",
+          details: "cashfree order is not paid yet",
         })
       );
     }

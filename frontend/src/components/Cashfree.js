@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const CashfreeComponent = () => {
-  const [planId, setPlanId] = useState("");
+  const [payment, setPayment] = useState("prepaid");
+  const [userStoreId, setUserStoreId] = useState(1);
+  const [variantId, setVariantId] = useState(3);
+  const [quantity, setQuantity] = useState(1);
 
   const handleCheckout = async (returnUrl, paymentSessionId, orderId) => {
     try {
-      console.log("enter in handle checkout frontend");
+      console.log("Enter in handle checkout frontend");
       console.log(orderId);
 
       const cashfree = window.Cashfree({ mode: "sandbox" }); // Initialize Cashfree
@@ -27,27 +30,23 @@ const CashfreeComponent = () => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("jwt"); // Assuming you store the token in localStorage
-
       const response = await axios.post(
-        "http://localhost:4500/api/subscriptions/checkoutCashfree",
+        "http://narayan.localhost:4500/api/order/cashfreeCheckout",
         {
-          plan_id: planId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include the Bearer token here
-          },
+          payment,
+          UserStoreId: userStoreId,
+          VariantId: variantId,
+          quantity,
         }
       );
 
-      const { order_meta, payment_session_id, order_id } = response.data; // Destructure the response data
+      const { order_id, payment_session_id, order_meta } = response.data;
 
       console.log(JSON.stringify(response.data));
-      console.log(order_meta);
       console.log(order_id + "this is order id");
       console.log(payment_session_id);
-      handleCheckout(order_meta.returnUrl, payment_session_id, order_id); // Access nested property
+
+      handleCheckout(order_meta.returnUrl, payment_session_id, order_id);
     } catch (error) {
       console.error(error);
     }
@@ -61,15 +60,63 @@ const CashfreeComponent = () => {
         </h1>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="plan_id" className="block text-gray-700 font-bold">
-              Plan ID:
+            <label htmlFor="payment" className="block text-gray-700 font-bold">
+              Payment Type:
             </label>
             <input
               type="text"
-              id="plan_id"
-              name="plan_id"
-              value={planId}
-              onChange={(e) => setPlanId(e.target.value)}
+              id="payment"
+              name="payment"
+              value={payment}
+              onChange={(e) => setPayment(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="userStoreId"
+              className="block text-gray-700 font-bold"
+            >
+              User Store ID:
+            </label>
+            <input
+              type="number"
+              id="userStoreId"
+              name="userStoreId"
+              value={userStoreId}
+              onChange={(e) => setUserStoreId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="variantId"
+              className="block text-gray-700 font-bold"
+            >
+              Variant ID:
+            </label>
+            <input
+              type="number"
+              id="variantId"
+              name="variantId"
+              value={variantId}
+              onChange={(e) => setVariantId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="quantity" className="block text-gray-700 font-bold">
+              Quantity:
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              name="quantity"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded mt-1"
               required
             />

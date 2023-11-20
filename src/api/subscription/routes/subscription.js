@@ -2,6 +2,7 @@
 const router = require("express").Router();
 const RBAC = require("../../../middlewares/RBAC");
 const subscriptionController = require("../controllers/subscription");
+const orderController = require("../../order/controllers/order");
 const {
   validateRequest,
   checkPlan,
@@ -27,6 +28,10 @@ module.exports = (app) => {
   router.post("/verify", subscriptionController.verify);
   router.post("/webhooks", subscriptionController.webhook);
   router.post("/webhooksCashfree", subscriptionController.webhookCashfree);
+  router.post("/order/cashfree/webhook", orderController.webhookCashfree);
+  router.post("/order/razorpay/webhook", orderController.webhook);
+  router.post("/order/verify", orderController.verify);
+
   router.put(
     "/:id/cancel",
     validateUserSubscription,

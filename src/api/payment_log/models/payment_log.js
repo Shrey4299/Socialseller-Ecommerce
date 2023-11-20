@@ -1,80 +1,83 @@
-
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   // Define the Post model using the provided Sequelize instance
   const Payment_log = sequelize.define("Payment_log", {
     order_id: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     payment_id: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     amount: {
       type: DataTypes.DECIMAL,
-      allowNull: true
+      allowNull: true,
     },
     amount_refunded: {
       type: DataTypes.DECIMAL,
-      allowNull: true
+      allowNull: true,
     },
     currency: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     status: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     method: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     captured: {
       type: DataTypes.BOOLEAN,
-      allowNull: true
+      allowNull: true,
     },
     card_id: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     card: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     last4: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     network: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     bank: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     wallet: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     vpa: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     contact: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     notes: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
+    },
+    client: {
+      type: DataTypes.STRING, // Change the data type as needed
+      allowNull: true,
     },
   });
 

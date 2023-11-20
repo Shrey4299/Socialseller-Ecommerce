@@ -24,24 +24,27 @@ const Subscription = () => {
         console.log(JSON.stringify(response));
 
         const options = {
-          key: "rzp_test_8VpSZycGC9ScYI",
+          key: "rzp_test_pqY2CKDdQMYzP5",
           amount: order.id,
           currency: "INR",
           name: "Your Company Name",
           description: "Product Purchase",
           image: "https://dummyimage.com/600x400/000/fff",
           order_id: order.id,
+          client: order.client,
           handler: function (response) {
-            console.log(JSON.stringify(response) + "this is response");
+            // console.log(JSON.stringify(response) + "this is response");
             console.log(order.id);
+            console.log(order.client + " this is client ");
             console.log(response.razorpay_payment_id);
             console.log(response.razorpay_signature);
 
             axios
-              .post("http://narayan.localhost:4500/api/order/verify", {
+              .post("http://localhost:4500/api/subscriptions/order/verify", {
                 razorpay_order_id: order.id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                client: order.client,
               })
               .then(function (response) {
                 console.log(response);

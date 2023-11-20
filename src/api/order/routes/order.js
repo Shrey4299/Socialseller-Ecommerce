@@ -2,12 +2,19 @@
 const router = require("express").Router();
 const ordersController = require("../controllers/order");
 
-// Define routes for the "Post" resource
 module.exports = (app) => {
+  router.post("/cashfreeCheckout", ordersController.createCashfreeOrder);
+  router.get("/cashfreeVerify", ordersController.verifyCashfree);
+  router.post("/webhooksCashfree", ordersController.webhookCashfree);
+
   router.get("/", ordersController.findAll);
   router.post("/", ordersController.create);
+
   router.post("/variant", ordersController.createVariantOrder);
   router.post("/checkout", ordersController.checkOut);
   router.post("/verify", ordersController.verify);
+
+  router.post("/successfullOrder", ordersController.successfullOrder);
+
   app.use("/api/order", router);
 };
