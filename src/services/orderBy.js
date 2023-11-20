@@ -1,5 +1,9 @@
 module.exports = (query) => {
-    const orderBy = (query.orderBy ? [Object.keys(query.orderBy)[0], query.orderBy[Object.keys(query.orderBy)[0]]] : ["id", "desc"]);
-    return [orderBy]
-
-}
+  const orderBy = query.orderBy
+    ? [
+        Object.keys(query.orderBy)[0],
+        query.orderBy[Object.keys(query.orderBy)[0]],
+      ]
+    : ["id", "desc"];
+  return [orderBy];
+};

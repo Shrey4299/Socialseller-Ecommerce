@@ -6,6 +6,7 @@ const uuid = require("uuid");
 const axios = require("axios");
 const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
+const successfullOrder = require("../services/successfullOrder");
 
 exports.create = async (req, res) => {
   try {
@@ -220,6 +221,7 @@ exports.verify = async (req, res) => {
     console.info(req.body.client + " this is client in verify");
 
     const sequelize = req.db;
+    const client = req.body.client;
     const razorpay_order_id = req.body.razorpay_order_id;
     const razorpay_payment_id = req.body.razorpay_payment_id;
     const razorpay_signature = req.body.razorpay_signature;
@@ -235,11 +237,15 @@ exports.verify = async (req, res) => {
 
     if (generateSignature === razorpay_signature) {
       try {
+        const user = await sequelize.models.User.findOne({
+          where: { username: client },
+        });
+
         const payment_log = await sequelize.models.Payment_log.update(
-          { client: req.body.client },
+          { client: client, UserId: user.id },
           { where: { order_id: razorpay_order_id } }
         );
-
+          
         if (payment_log) {
           console.log("Payment log updated successfully");
         } else {
@@ -247,69 +253,27 @@ exports.verify = async (req, res) => {
         }
       } catch (error) {
         console.error("Error updating payment log:", error);
-        res.status(500).send({ error: "Failed to update payment log" });
+        throw error;
       }
 
-      const requestData = {
-        razorpay_order_id: razorpay_order_id,
-        razorpay_payment_id: razorpay_payment_id,
-      };
+      const result = await successfullOrder(
+        client,
+        razorpay_order_id,
+        razorpay_payment_id
+      );
 
-      const apiUrl = "http://narayan.localhost:4500/api/order/successfullOrder";
-
-      axios
-        .post(apiUrl, requestData)
-        .then((response) => {
-          console.log("Success:", response.data);
-        })
-        .catch((error) => {
-          console.error(
-            "Error:",
-            error.response ? error.response.data : error.message
-          );
-        });
+      return res.status(200).send(result);
     } else {
       return res.status(400).send(
         requestError({
           message: "Bad Request!",
-          details:
-            "razorpay_signature and generated signature did not matched!",
+          details: "razorpay_signature and generated signature did not match!",
         })
       );
     }
   } catch (error) {
     console.log(error);
-    res.status(500).send(error);
-  }
-};
-
-exports.successfullOrder = async (req, res) => {
-  try {
-    console.log("entered in successfull order");
-
-    const sequelize = req.db;
-    const { razorpay_order_id, razorpay_payment_id } = req.body;
-
-    const order = await sequelize.models.Order.update(
-      { is_paid: true, payment_id: razorpay_payment_id, status: "ACTIVE" },
-      { where: { order_id: razorpay_order_id } }
-    );
-
-    if (order) {
-      return res.status(200).send({ message: "Order marked as successful!" });
-    } else {
-      return res.status(400).send(
-        requestError({
-          message: "Bad Request!",
-          details: "Failed to update order status",
-        })
-      );
-    }
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .send({ error: "Failed to process successful order" });
+    res.status(500).send({ error: "Internal Server Error" });
   }
 };
 

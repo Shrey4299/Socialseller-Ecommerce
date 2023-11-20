@@ -14,7 +14,6 @@ module.exports = (app) => {
   router.post("/checkout", ordersController.checkOut);
   router.post("/verify", ordersController.verify);
 
-  router.post("/successfullOrder", ordersController.successfullOrder);
 
   app.use("/api/order", router);
 };

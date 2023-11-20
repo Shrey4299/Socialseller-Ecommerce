@@ -114,5 +114,14 @@ module.exports = async (sequelize) => {
     as: "user",
   });
 
+  db.Payment_log.belongsTo(db.User, {
+    foreignKey: "UserId", // Adjust the foreign key based on your actual database schema
+    as: "user",
+  });
+  db.User.hasMany(db.Payment_log, {
+    foreignKey: "UserId", // Adjust the foreign key based on your actual database schema
+    as: "payment_logs",
+  });
+
   return db.sequelize;
 };

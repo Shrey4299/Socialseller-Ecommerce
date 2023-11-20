@@ -9,7 +9,6 @@ exports.create = async (req, res) => {
     const sequelize = req.db;
     const body = req.body;
     const variants = body.variants;
-    // creating product
     const product = await sequelize.models.Product.create({
       name: body.name,
       description: body.description,
@@ -19,7 +18,6 @@ exports.create = async (req, res) => {
       ThumbnailId: body.ThumbnailId,
     });
 
-    // creating variants
     let variantArray = [];
     for (const variant of variants) {
       variantArray.push({
@@ -42,12 +40,10 @@ exports.create = async (req, res) => {
     if (tags.length > 0) {
       createdTags = await blukTag({ sequelize, tags, ProductId: product.id });
     }
-    return res
-      .status(200)
-      .send({
-        message: "Product and variants created successfully!",
-        data: { product, variants: createdVariants, tags: createdTags || null },
-      });
+    return res.status(200).send({
+      message: "Product and variants created successfully!",
+      data: { product, variants: createdVariants, tags: createdTags || null },
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Failed to create a product" });
@@ -58,30 +54,44 @@ exports.find = async (req, res) => {
   try {
     const sequelize = req.db;
     const query = req.query;
+    const category_id = req.query.category_id;
+    const minPrice = parseFloat(query.price.min) || 0;
+    const maxPrice = parseFloat(query.price.max) || Number.MAX_SAFE_INTEGER;
+
     const pagination = await getPagination(query.pagination);
     const order = orderBy(query);
+
+    console.log(order);
+
     const products = await sequelize.models.Product.findAndCountAll({
       offset: pagination.offset,
       limit: pagination.limit,
       order: order,
       distinct: true,
+      where: {
+        ...(category_id ? { CategoryId: category_id } : {}),
+      },
       include: [
         {
           model: sequelize.models.Variant,
           as: "variants",
-          include: ["thumbnail"],
+          where: {
+            price: {
+              [Op.between]: [minPrice, maxPrice],
+            },
+          },
         },
-        {
-          model: sequelize.models.Media,
-          as: "thumbnail",
-        },
-        {
-          model: sequelize.models.Category,
-          as: "category",
-        },
-        "tags",
+        // {
+        //   model: sequelize.models.Category,
+        //   as: "category",
+        // },
+        // {
+        //   model: sequelize.models.Tag,
+        //   as: "tags",
+        // },
       ],
     });
+
     const meta = await getMeta(pagination, products.count);
     return res.status(200).send({ data: products.rows, meta });
   } catch (error) {
@@ -135,14 +145,12 @@ exports.update = async (req, res) => {
         .status(200)
         .send({ message: "product updated successfully!", data: product });
     } else {
-      return res
-        .status(400)
-        .send(
-          requestError({
-            message: "Invalid Product ID",
-            details: "Requested Product Id Does not exists",
-          })
-        );
+      return res.status(400).send(
+        requestError({
+          message: "Invalid Product ID",
+          details: "Requested Product Id Does not exists",
+        })
+      );
     }
   } catch (error) {
     console.error(error);
