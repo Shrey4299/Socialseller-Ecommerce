@@ -7,6 +7,8 @@ const axios = require("axios");
 const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
 const successfullOrder = require("../services/successfullOrder");
+const { Op, literal, or } = require("sequelize");
+const productMetricsService = require("../../../services/productMetricsUpdate");
 
 exports.create = async (req, res) => {
   try {
@@ -209,6 +211,13 @@ exports.checkOut = async (req, res) => {
         return error;
       }
     };
+
+    const productMetrics =
+      await productMetricsService.createOrUpdateProductMetrics(
+        sequelize,
+        variant,
+        amount
+      );
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "Failed to fetch subscription" });
@@ -245,12 +254,6 @@ exports.verify = async (req, res) => {
           { client: client, UserId: user.id },
           { where: { order_id: razorpay_order_id } }
         );
-          
-        if (payment_log) {
-          console.log("Payment log updated successfully");
-        } else {
-          console.log("Failed to update payment log");
-        }
       } catch (error) {
         console.error("Error updating payment log:", error);
         throw error;

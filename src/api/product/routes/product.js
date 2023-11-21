@@ -17,7 +17,7 @@ module.exports = (app) => {
   router.delete("/products/:id", [RBAC], productController.delete);
   router.get(
     "/search/products",
-    [RBAC, Joi.queryValidator],
+    [Joi.queryValidator],
     productController.search
   );
   router.get(

@@ -13,7 +13,7 @@ const Subscription = () => {
     e.preventDefault();
 
     axios
-      .post("http://narayan.localhost:4500/api/order/checkout", {
+      .post("http://narayan.localhost:4500/api/order/checkout/razorpay", {
         payment: payment,
         VariantId: variantId,
         quantity: quantity,
@@ -40,12 +40,15 @@ const Subscription = () => {
             console.log(response.razorpay_signature);
 
             axios
-              .post("http://localhost:4500/api/subscriptions/order/verify", {
-                razorpay_order_id: order.id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                client: order.client,
-              })
+              .post(
+                "http://localhost:4500/api/subscriptions/order/verify/razorpay",
+                {
+                  razorpay_order_id: order.id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  client: order.client,
+                }
+              )
               .then(function (response) {
                 console.log(response);
                 alert("Payment Succeeded");

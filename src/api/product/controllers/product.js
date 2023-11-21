@@ -175,21 +175,17 @@ exports.search = async (req, res) => {
     const qs = query.qs.trim();
     const tags = query?.tags?.toLowerCase().split("_");
     const pagination = await getPagination(query.pagination);
-    const orderBy = query.orderBy
-      ? [Object.keys(query.orderBy)[0], query.orderBy.id]
-      : ["id", "desc"];
+
     const products = await sequelize.models.Product.findAndCountAll({
       where: {
         [Op.or]: [
           { name: { [Op.iLike]: `%${qs}%` } },
           { description: { [Op.iLike]: `%${qs}%` } },
-          // code to search in variant
           literal(
             `EXISTS (SELECT * FROM "Variants" AS "variants" WHERE "Product"."id" = "variants"."ProductId" AND "variants"."name" ILIKE '%${qs}%')`
           ),
         ],
       },
-      order: [orderBy],
       offset: pagination.offset,
       limit: pagination.limit,
       distinct: true,
@@ -197,15 +193,8 @@ exports.search = async (req, res) => {
         {
           model: sequelize.models.Variant,
           as: "variants",
-          where: {
-            [Op.or]: [{ name: { [Op.iLike]: `%${qs}%` } }],
-          },
-          include: ["thumbnail"],
         },
-        {
-          model: sequelize.models.Media,
-          as: "thumbnail",
-        },
+
         {
           model: sequelize.models.Category,
           as: "category",
@@ -213,13 +202,6 @@ exports.search = async (req, res) => {
         {
           model: sequelize.models.Tag,
           as: "tags",
-          ...(query.tags && {
-            where: {
-              name: {
-                [Op.iLike]: { [Op.any]: tags.map((item) => `%${item}%`) },
-              },
-            },
-          }),
         },
       ],
     });
@@ -230,6 +212,7 @@ exports.search = async (req, res) => {
     return res.status(500).send(error);
   }
 };
+
 exports.findByPrice = async (req, res) => {
   try {
     const sequelize = req.db;

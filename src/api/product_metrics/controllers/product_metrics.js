@@ -1,4 +1,5 @@
 // Import necessary modules and services
+const { Op, literal, or } = require("sequelize");
 
 /**
  * @param {import("express").Request} req
@@ -15,8 +16,6 @@ exports.create = async (req, res) => {
       ordered_count: body.ordered_count,
       shares_count: body.shares_count,
       revenue_generated: body.revenue_generated,
-      profit_margin: body.profit_margin,
-      premium_plan_orders: body.premium_plan_orders,
     });
 
     return res.status(200).send({

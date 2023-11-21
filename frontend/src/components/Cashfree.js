@@ -31,7 +31,7 @@ const CashfreeComponent = () => {
 
     try {
       const response = await axios.post(
-        "http://narayan.localhost:4500/api/order/cashfreeCheckout",
+        "http://narayan.localhost:4500/api/order/checkout/cashfree",
         {
           payment,
           UserStoreId: userStoreId,

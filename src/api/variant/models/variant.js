@@ -1,37 +1,34 @@
-
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   // Define the Post model using the provided Sequelize instance
   const Variant = sequelize.define("Variant", {
     name: {
       type: DataTypes.STRING,
-      require: true
+      require: true,
     },
     price: {
       type: DataTypes.DECIMAL,
       allowNull: false,
-      require: true
+      require: true,
     },
     from: {
       type: DataTypes.DECIMAL,
-      allowNull: true
+      allowNull: true,
     },
     to: {
       type: DataTypes.DECIMAL,
-      allowNull: true
+      allowNull: true,
     },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      require: true
+      require: true,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
-
+    // is_active: {
+    //   type: DataTypes.BOOLEAN,
+    //   defaultValue: true
+    // },
   });
-
 
   return Variant;
 };

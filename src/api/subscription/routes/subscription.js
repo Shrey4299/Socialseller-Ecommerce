@@ -30,7 +30,7 @@ module.exports = (app) => {
   router.post("/webhooksCashfree", subscriptionController.webhookCashfree);
   router.post("/order/cashfree/webhook", orderController.webhookCashfree);
   router.post("/order/razorpay/webhook", orderController.webhook);
-  router.post("/order/verify", orderController.verify);
+  router.post("/order/verify/razorpay", orderController.verify);
 
   router.put(
     "/:id/cancel",
