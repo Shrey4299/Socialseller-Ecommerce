@@ -54,12 +54,12 @@ exports.find = async (req, res) => {
   try {
     const sequelize = req.db;
     const query = req.query;
-    const category_id = req.query.category_id;
+    const category_id = req.query.category;
     const minPrice = parseFloat(query.price.min) || 0;
     const maxPrice = parseFloat(query.price.max) || Number.MAX_SAFE_INTEGER;
 
     const pagination = await getPagination(query.pagination);
-    const order = orderBy(query);
+    const order = orderBy(query, sequelize);
 
     console.log(order);
 
@@ -67,7 +67,7 @@ exports.find = async (req, res) => {
       offset: pagination.offset,
       limit: pagination.limit,
       order: order,
-      distinct: true,
+
       where: {
         ...(category_id ? { CategoryId: category_id } : {}),
       },
@@ -81,14 +81,6 @@ exports.find = async (req, res) => {
             },
           },
         },
-        // {
-        //   model: sequelize.models.Category,
-        //   as: "category",
-        // },
-        // {
-        //   model: sequelize.models.Tag,
-        //   as: "tags",
-        // },
       ],
     });
 
