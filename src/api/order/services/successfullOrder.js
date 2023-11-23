@@ -1,6 +1,4 @@
-// middlewares/database.js
 const { requestError } = require("../../../services/errors");
-const createDbConnection = require("../../../utils/dbConnection");
 const dbCache = require("../../../utils/dbCache");
 
 module.exports = async (client, razorpay_order_id, razorpay_payment_id) => {
@@ -16,8 +14,22 @@ module.exports = async (client, razorpay_order_id, razorpay_payment_id) => {
 
   console.log("entered in successful order");
 
+  const variant = await sequelize.models.Variant.findByPk(2);
+
+  if (!variant) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Variant not found" });
+  }
+
+  let variantQuantity = variant.quantity;
+
+  await variant.update({
+    quantity: variantQuantity - 1,
+  });
+
   const order = await sequelize.models.Order.update(
-    { is_paid: true, payment_id: razorpay_payment_id, status: "ACTIVE" },
+    { isPaid: true, payment_id: razorpay_payment_id, status: "pending" },
     { where: { order_id: razorpay_order_id } }
   );
 

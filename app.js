@@ -8,14 +8,14 @@ const cors = require("cors");
 const syntaxErrorhandler = require("./src/middlewares/syntaxErrorhandler");
 const notFoundHandler = require("./src/middlewares/notFoundHandler");
 const instance_starter = require("./src/utils/instance_starter")();
+const firebaseAdmin = require("firebase-admin");
+const path = require("path");
 
-// const rateLimiter = require('express-rate-limit')
+const serviceAccount = require("./config/web-push-559b6-firebase-adminsdk-8ruqy-5670e6b148.json");
 
-// app.use(rateLimiter({
-//     windowMs: 15 * 60 * 1000, // 15 minutes
-//     max: 12, // Limit to 100 requests per IP within the window
-//     message: 'Too many requests, please try again later.',
-// }))
+firebaseAdmin.initializeApp({
+  credential: firebaseAdmin.credential.cert(serviceAccount),
+});
 
 app.use(morgan("dev"));
 // app.use(express.json());
@@ -30,7 +30,8 @@ app.use(
 app.use(syntaxErrorhandler);
 app.use(subdomainMiddleware);
 app.use(databaseMiddleware);
-app.use(express.static("public"));
+app.use("/public", express.static(path.join(__dirname, "public")));
+app.set("view engine", "ejs");
 
 app.use(cors());
 // adding routes

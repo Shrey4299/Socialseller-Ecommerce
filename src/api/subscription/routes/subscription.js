@@ -3,6 +3,10 @@ const router = require("express").Router();
 const RBAC = require("../../../middlewares/RBAC");
 const subscriptionController = require("../controllers/subscription");
 const orderController = require("../../order/controllers/order");
+const fs = require("fs");
+const ejs = require("ejs");
+const bcrypt = require("bcrypt");
+
 const {
   validateRequest,
   checkPlan,

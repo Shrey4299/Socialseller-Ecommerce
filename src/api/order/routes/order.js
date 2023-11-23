@@ -9,6 +9,7 @@ module.exports = (app) => {
 
   router.get("/", ordersController.findAll);
   router.post("/", ordersController.create);
+  router.put("/:id", ordersController.update);
   router.post("/variant", ordersController.createVariantOrder);
 
   router.post("/checkout/razorpay", ordersController.checkOut);

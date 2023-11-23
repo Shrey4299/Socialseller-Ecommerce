@@ -16,6 +16,8 @@ exports.create = async (req, res) => {
       CollectionId: body.CollectionId,
       CollectionStaticId: body.CollectionStaticId,
       ThumbnailId: body.ThumbnailId,
+      shipping_value: body.shipping_value,
+      shipping_value_type: body.shipping_value_type,
     });
 
     let variantArray = [];

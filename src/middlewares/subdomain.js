@@ -1,6 +1,5 @@
 const app = require("../../server");
 
-// middlewares/subdomain.js
 module.exports = (req, res, next) => {
   console.log(req.hostname + " this is hostname");
 
@@ -37,9 +36,13 @@ module.exports = (req, res, next) => {
     "address",
     "order",
     "payment_log",
+    "public",
   ];
-  if (parts.length > 1 && !req.url.includes("webhook")) {
-    // shared routes
+  if (
+    parts.length > 1 &&
+    !req.url.includes("webhook") &&
+    !req.hostname.includes("ngrok")
+  ) {
     console.log("greater");
     let api = req.url.split("?")[0].split("/")[2];
     if (!sharedRoutes.includes(api)) {
@@ -56,10 +59,10 @@ module.exports = (req, res, next) => {
       next();
     }
   } else {
-    // main routes
     let api = req.url.split("?")[0].split("/")[2];
     let mainRoutes = [
       "users",
+      "uploads",
       "user_metrics",
       "permissions",
       "roles",
@@ -81,6 +84,7 @@ module.exports = (req, res, next) => {
       "transactions",
       "order",
       "subscriptions",
+      "public",
     ];
 
     if (!mainRoutes.includes(api))

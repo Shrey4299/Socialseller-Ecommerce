@@ -30,9 +30,7 @@ module.exports = (sequelize) => {
     payment_id: {
       type: DataTypes.STRING,
     },
-    status: {
-      type: DataTypes.ENUM(["ACTIVE", "REFUNDED", "EXPIRED"]),
-    },
+
     isPaid: {
       type: DataTypes.BOOLEAN,
     },

@@ -6,9 +6,8 @@ const uuid = require("uuid");
 const axios = require("axios");
 const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
-const successfullOrder = require("../services/successfullOrder");
-const { Op, literal, or } = require("sequelize");
 const productMetricsService = require("../../../services/productMetricsUpdate");
+const { handleSuccessfulOrder } = require("../services/orderHandler");
 
 exports.create = async (req, res) => {
   try {
@@ -226,7 +225,7 @@ exports.checkOut = async (req, res) => {
 
 exports.verify = async (req, res) => {
   try {
-    console.log("entered in razorpay verify");
+    console.error("entered in razorpay verify");
     console.info(req.body.client + " this is client in verify");
 
     const sequelize = req.db;
@@ -259,7 +258,7 @@ exports.verify = async (req, res) => {
         throw error;
       }
 
-      const result = await successfullOrder(
+      const result = await handleSuccessfulOrder(
         client,
         razorpay_order_id,
         razorpay_payment_id
@@ -308,7 +307,7 @@ exports.webhook = async (req, res) => {
 
 exports.createCashfreeOrder = async (req, res) => {
   try {
-    console.log("entered in cashfree order");
+    console.error("entered in cashfree order");
     const order_id = uuid.v4();
     const sequelize = req.db;
     const { payment, UserStoreId, VariantId, quantity } = req.body;
@@ -344,7 +343,7 @@ exports.createCashfreeOrder = async (req, res) => {
       }
     };
 
-    const user = await sequelize.models.User_store.findByPk(1);
+    const user = await sequelize.models.User_store.findByPk(2);
 
     const response = await axios.post(
       "https://sandbox.cashfree.com/pg/orders",

@@ -6,12 +6,7 @@ const jwt = require("../../../services/jwt");
 const crypto = require("crypto");
 const { getPagination, getMeta } = require("../../../services/pagination");
 const axios = require("axios");
-const firebaseAdmin = require("firebase-admin");
-var serviceAccount = require("../../../../config/web-push-559b6-firebase-adminsdk-8ruqy-5670e6b148.json");
 const getWebhookBody = require("../services/getWebhookBody");
-firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert(serviceAccount),
-});
 
 const payment_log = require("../../payment_log/models/payment_log");
 const orderBy = require("../../../services/orderBy");
@@ -267,18 +262,6 @@ exports.verify = async (req, res) => {
         { where: { order_id: razorpay_order_id } }
       );
       if (subscription) {
-        const token =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzAwMDQ1ODI4LCJleHAiOjE3MDA2NTA2Mjh9.xSqEWq2mLmUJb8uG2tWUEfsFkoY6bX7GHxMWZU4Zzww";
-        const message = {
-          notification: {
-            title: "Subscription Purchased successfullY!",
-            body: "Your subscription has been created successfully , now you can enjoy premium benifits",
-          },
-          token,
-        };
-
-        const sendMessage = await firebaseAdmin.messaging().send(message);
-        console.log(sendMessage);
         return res
           .status(200)
           .send({ message: "Transaction Successful!", data: subscription });
