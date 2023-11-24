@@ -7,7 +7,7 @@ const categoryController = require("../controllers/category");
 module.exports = (app) => {
   router.post("/", categoryController.create);
   router.get("/", [RBAC], categoryController.find);
-  router.get("/:id", [RBAC], categoryController.findOne);
+  router.get("/:id", categoryController.findOne);
   router.put("/:id", [RBAC], categoryController.update);
   router.delete("/:id", [RBAC], categoryController.delete);
   router.get("/:id/products", categoryController.getProducts);

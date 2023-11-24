@@ -4,10 +4,13 @@ import axios from "axios";
 
 // Define the Subscription component
 const Subscription = () => {
+  const defaultPhoneNumber = "8085705849"; // Set your default phone number here
+
   const [payment, setPayment] = useState("prepaid");
   const [variantId, setVariantId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [userStoreId, setUserStoreId] = useState(1);
+  const [phoneNumber, setPhoneNumber] = useState(defaultPhoneNumber);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,7 +24,6 @@ const Subscription = () => {
       })
       .then((response) => {
         const order = response.data;
-        console.log(JSON.stringify(response));
 
         const options = {
           key: "rzp_test_pqY2CKDdQMYzP5",
@@ -33,7 +35,6 @@ const Subscription = () => {
           order_id: order.id,
           client: order.client,
           handler: function (response) {
-            // console.log(JSON.stringify(response) + "this is response");
             console.log(order.id);
             console.log(order.client + " this is client ");
             console.log(response.razorpay_payment_id);
@@ -59,7 +60,7 @@ const Subscription = () => {
               });
           },
           prefill: {
-            contact: "CUSTOMER_PHONE_NUMBER",
+            contact: phoneNumber, // Use the phone number from the state
             name: "CUSTOMER_NAME",
             email: "CUSTOMER_EMAIL",
           },
@@ -152,6 +153,24 @@ const Subscription = () => {
               required
             />
           </div>
+          <div className="mb-4">
+            <label
+              htmlFor="phoneNumber"
+              className="block text-gray-700 font-bold"
+            >
+              Phone Number:
+            </label>
+            <input
+              type="text"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+              required
+            />
+          </div>
+
           <div className="text-center">
             <button
               type="submit"

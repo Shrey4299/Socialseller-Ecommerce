@@ -67,21 +67,17 @@ exports.getProducts = async (req, res) => {
   try {
     const sequelize = req.db;
     const { id } = req.params;
-    console.log(id);
+    const query = req.query;
+    const pagination = await getPagination(query.pagination);
     const category = await sequelize.models.Category.findByPk(id, {
-      include: ["thumbnail"],
+      include: ["products"],
+      distinct: true,
+      offset: pagination.offset,
+      limit: pagination.limit,
     });
-    console.log(category);
     if (category) {
-      const query = req.query;
-      const pagination = await getPagination(query.pagination);
-      const products = await sequelize.models.Product.findAndCountAll({
-        distinct: true,
-        offset: pagination.offset,
-        limit: pagination.limit,
-      });
-      const meta = await getMeta(pagination, products.count);
-      return res.status(200).send({ category, data: products.rows, meta });
+      const meta = await getMeta(pagination, 1);
+      return res.status(200).send({ data: category, meta });
     } else {
       return res.status(400).send({ error: "Invalid Id" });
     }

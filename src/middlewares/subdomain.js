@@ -37,6 +37,7 @@ module.exports = (req, res, next) => {
     "order",
     "payment_log",
     "public",
+    "order_variant",
   ];
   if (
     parts.length > 1 &&

@@ -28,7 +28,7 @@ const group = require("../api/group/models/group");
 const user_store = require("../api/user_store/models/user_store");
 const address = require("../api/address/models/address");
 const order = require("../api/order/models/order");
-const order_variant = require("../api/order/models/order_variant");
+const order_variant = require("../api/order_variant/models/order_variant");
 const payment_log = require("../api/payment_log/models/payment_log");
 
 module.exports = async (sequelize) => {
