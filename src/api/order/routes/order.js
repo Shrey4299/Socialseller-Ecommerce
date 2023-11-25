@@ -10,8 +10,8 @@ module.exports = (app) => {
 
   router.get("/", ordersController.findAll);
   router.post("/", ordersController.create);
+  router.get("/:id", ordersController.findOne);
   router.put("/:id", ordersController.update);
-  router.post("/variant", ordersController.createVariantOrder);
 
   router.post(
     "/checkout/razorpay",
@@ -24,7 +24,6 @@ module.exports = (app) => {
   router.put("/:id/cancel", ordersController.cancelOrder);
   router.put("/:id/deliver", ordersController.deliverOrder);
   router.get("/status/:status", ordersController.getOrdersByStatus);
-
 
   app.use("/api/order", router);
 };

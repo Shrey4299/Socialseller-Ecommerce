@@ -171,27 +171,31 @@ module.exports = async (sequelize) => {
     as: "userStore",
   });
 
-  db.Order.belongsToMany(db.Variant, { through: "Order_variant" });
-  db.Variant.belongsToMany(db.Order, { through: "Order_variant" });
+  db.User_store.hasOne(db.Order);
+  db.Order.belongsTo(db.User_store);
 
-  db.Order_variant.belongsTo(db.Order, { foreignKey: "OrderId", as: "order" });
+  db.Cart.belongsTo(db.User_store, {
+    foreignKey: "UserStoreId",
+    as: "userStore",
+  });
+
+  // order realtions
 
   db.Order_variant.belongsTo(db.Variant, {
     foreignKey: "VariantId",
     as: "variant",
   });
 
-  db.User_store.hasOne(db.Order);
-  db.Order.belongsTo(db.User_store);
+  db.Order_variant.belongsToMany(db.Order, {
+    through: "Order_variant_link",
+    foreignKey: "OrderVariantId",
+    as: "orders",
+  });
 
-  // db.User_store.hasOne(db.Cart, {
-  //   foreignKey: "UserStoreId",
-  //   as: "cart",
-  // });
-
-  db.Cart.belongsTo(db.User_store, {
-    foreignKey: "UserStoreId",
-    as: "userStore",
+  db.Order.belongsToMany(db.Order_variant, {
+    through: "Order_variant_link",
+    foreignKey: "OrderId",
+    as: "orderVariants",
   });
 
   return db.sequelize;

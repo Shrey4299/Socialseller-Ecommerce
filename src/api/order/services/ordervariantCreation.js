@@ -1,52 +1,64 @@
-const order_variant = require("../../order_variant/routes/order_variant");
+const { requestError } = require("../../../services/errors");
+const dbCache = require("../../../utils/dbCache");
 
-exports.createVariantOrder = async (quantity, VariantId, OrderId, req) => {
+exports.createVariantOrder = async (quantity, VariantId, OrderId, req, res) => {
   try {
     console.log("entered in create order variant creation");
+    console.log(OrderId);
     const sequelize = req.db;
-    const OrderVariant = sequelize.models.Order_variant;
-    const variant = await sequelize.models.Variant.findOne({
-      where: { id: VariantId },
+    const variant = await sequelize.models.Variant.findByPk(VariantId);
+
+    const orderVariant = await sequelize.models.Order_variant.create({
+      quantity: quantity,
+      price: variant.price * quantity,
+      selling_price: variant.price * quantity,
+      VariantId: VariantId,
+      status: "NEW",
     });
 
-    const order = await sequelize.models.Order.findOne({
-      where: { id: OrderId },
-    });
-
-    const existingOrderVariant = await OrderVariant.findOne({
-      where: {
-        VariantId: VariantId,
-        OrderId: OrderId,
-      },
-    });
-
-    if (existingOrderVariant) {
-      const newQuantity = existingOrderVariant.quantity + quantity;
-      await existingOrderVariant.update({ quantity: newQuantity });
-    } else {
-      const orderVariant = await OrderVariant.create({
-        quantity: quantity,
-        price: variant.price * quantity,
-        selling_price: variant.price * quantity,
-        OrderId: OrderId,
-        VariantId: VariantId,
-        status: "new",
-      });
-
-      res.status(201).send({
-        data: orderVariant,
-        message: "Order Variant created/updated successfully",
-      });
-    }
-
-    res.status(201).send({
-      data: existingOrderVariant,
-      message: "Order Variant created/updated successfully",
+    const orderVariantLink = await sequelize.models.Order_variant_link.create({
+      OrderVariantId: orderVariant.id,
+      OrderId: OrderId,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send({
-      message: "Internal Server Error",
+  }
+};
+
+exports.updateOrderVariant = async (OrderId, client) => {
+  try {
+    console.log("Entered in update order variant creation");
+    console.log(OrderId);
+
+    const subdomain = client;
+    const sequelize = dbCache.get(subdomain);
+
+    if (!sequelize) {
+      throw requestError({
+        message: "Invalid Site Address",
+        details: "Requested subdomain not found",
+      });
+    }
+
+    const order = await sequelize.models.Order.findOne({
+      where: { order_id: OrderId },
     });
+
+    const orderVariantLink = await sequelize.models.Order_variant_link.findOne({
+      where: { OrderId: order.id },
+    });
+
+    if (!orderVariantLink) {
+      console.error("Order_variant_link not found for OrderId:", OrderId);
+    }
+
+    await sequelize.models.Order_variant.update(
+      { status: "PROCESSING" },
+      { where: { id: orderVariantLink.OrderVariantId } }
+    );
+
+    console.log("Order_variant updated successfully");
+  } catch (error) {
+    console.error(error);
   }
 };

@@ -8,7 +8,8 @@ const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
 const productMetricsService = require("../../../services/productMetricsUpdate");
 const { handleSuccessfulOrder } = require("../services/orderHandler");
-const orederVariantCreation = require("../services/ordervariantCreation")
+const orederVariantCreation = require("../services/ordervariantCreation");
+const orederVariantUpdate = require("../services/ordervariantCreation");
 
 exports.create = async (req, res) => {
   try {
@@ -54,7 +55,20 @@ exports.findAll = async (req, res) => {
   try {
     const sequelize = req.db;
     const Order = sequelize.models.Order;
-    const orders = await Order.findAll();
+    const orders = await Order.findAll({
+      include: [
+        {
+          model: sequelize.models.Order_variant,
+          as: "orderVariants",
+          include: [
+            {
+              model: sequelize.models.Variant,
+              as: "variant",
+            },
+          ],
+        },
+      ],
+    });
     return res.status(200).send(orders);
   } catch (error) {
     console.error(error);
@@ -66,8 +80,25 @@ exports.findOne = async (req, res) => {
   try {
     const sequelize = req.db;
     const Order = sequelize.models.Order;
+    const Order_variant_link = sequelize.models.Order_variant_link;
+
     const orderId = req.params.id;
-    const order = await Order.findOne({ where: { id: orderId } });
+
+    const order = await Order.findOne({
+      where: { id: orderId },
+      include: [
+        {
+          model: sequelize.models.Order_variant,
+          as: "orderVariants",
+          include: [
+            {
+              model: sequelize.models.Variant,
+              as: "variant",
+            },
+          ],
+        },
+      ],
+    });
 
     if (!order) {
       return res.status(404).send({ error: "Order not found" });
@@ -98,7 +129,6 @@ exports.delete = async (req, res) => {
   }
 };
 
-
 exports.checkOut = async (req, res) => {
   try {
     console.log("entered in razorpay checkout");
@@ -116,8 +146,6 @@ exports.checkOut = async (req, res) => {
       currency: "INR",
       receipt: "RCT" + require("uid").uid(10).toUpperCase(),
     };
-
-    const result = await orederVariantCreation.createVariantOrder()
 
     const prePaidOrder = razorpay.orders.create(
       options,
@@ -151,6 +179,14 @@ exports.checkOut = async (req, res) => {
           address: "user address",
           isPaid: false,
         });
+
+        const result = await orederVariantCreation.createVariantOrder(
+          quantity,
+          VariantId,
+          orderProduct.id,
+          req,
+          res
+        );
       } catch (error) {
         console.log(error);
         return error;
@@ -208,6 +244,11 @@ exports.verify = async (req, res) => {
         client,
         razorpay_order_id,
         razorpay_payment_id
+      );
+
+      const orderVariantUpdate = await orederVariantCreation.updateOrderVariant(
+        razorpay_order_id,
+        client
       );
 
       return res.status(200).send(result);
