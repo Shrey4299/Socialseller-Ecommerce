@@ -15,7 +15,7 @@ module.exports = (app) => {
 
   router.post(
     "/checkout/razorpay",
-    ordersMiddlware.validateRequest,
+    // ordersMiddlware.validateRequest,
     ordersController.checkOut
   );
   router.post("/verify/razorpay", ordersController.verify);
@@ -25,5 +25,5 @@ module.exports = (app) => {
   router.put("/:id/deliver", ordersController.deliverOrder);
   router.get("/status/:status", ordersController.getOrdersByStatus);
 
-  app.use("/api/order", router);
+  app.use("/api/orders", router);
 };

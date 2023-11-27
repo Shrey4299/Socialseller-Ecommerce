@@ -2,6 +2,7 @@
 
 const { Sequelize } = require("sequelize");
 const { getPagination, getMeta } = require("../../../services/pagination");
+const { Op, literal, or } = require("sequelize");
 
 /**
  *
@@ -58,34 +59,7 @@ exports.findOne = async (req, res) => {
     return res.status(500).send({ error: "Failed to fetch category" });
   }
 };
-/**
- *
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- */
-exports.getProducts = async (req, res) => {
-  try {
-    const sequelize = req.db;
-    const { id } = req.params;
-    const query = req.query;
-    const pagination = await getPagination(query.pagination);
-    const category = await sequelize.models.Category.findByPk(id, {
-      include: ["products"],
-      distinct: true,
-      offset: pagination.offset,
-      limit: pagination.limit,
-    });
-    if (category) {
-      const meta = await getMeta(pagination, 1);
-      return res.status(200).send({ data: category, meta });
-    } else {
-      return res.status(400).send({ error: "Invalid Id" });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ error: "Failed to fetch category" });
-  }
-};
+
 /**
  *
  * @param {import("express").Request} req
@@ -145,5 +119,75 @@ exports.delete = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "Failed to fetch category" });
+  }
+};
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getProducts = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const query = req.query;
+    const pagination = await getPagination(query.pagination);
+    const category = await sequelize.models.Category.findByPk(id, {
+      include: ["products"],
+      distinct: true,
+      offset: pagination.offset,
+      limit: pagination.limit,
+    });
+    if (category) {
+      const meta = await getMeta(pagination, 1);
+      return res.status(200).send({ data: category, meta });
+    } else {
+      return res.status(400).send({ error: "Invalid Id" });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch category" });
+  }
+};
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.searchInCategory = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const { query } = req.query;
+    const pagination = await getPagination(req.query.pagination);
+
+
+
+    const products = await sequelize.models.Product.findAll({
+      where: {
+        CategoryId: id,
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${query}%` } },
+          { description: { [Op.iLike]: `%${query}%` } },
+        ],
+      },
+      offset: pagination.offset,
+      limit: pagination.limit,
+    });
+
+    if (products.length > 0) {
+      const meta = await getMeta(pagination, products.length);
+      return res.status(200).send({ data: products, meta });
+    } else {
+      return res.status(404).send({
+        error:
+          "No products found in the specified category with the given search query",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
   }
 };

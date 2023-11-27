@@ -61,7 +61,6 @@ module.exports = async (req, res, next) => {
       role = getrole;
     }
 
-    // call next if has permissions
     if (
       Role_permission.RoleId === role.id &&
       Role_permission.PermissionId === Permission.id

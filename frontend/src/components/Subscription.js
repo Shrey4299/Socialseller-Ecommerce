@@ -7,8 +7,6 @@ const Subscription = () => {
   const defaultPhoneNumber = "8085705849"; // Set your default phone number here
 
   const [payment, setPayment] = useState("prepaid");
-  const [variantId, setVariantId] = useState("");
-  const [quantity, setQuantity] = useState(1);
   const [userStoreId, setUserStoreId] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState(defaultPhoneNumber);
 
@@ -16,11 +14,14 @@ const Subscription = () => {
     e.preventDefault();
 
     axios
-      .post("http://narayan.localhost:4500/api/order/checkout/razorpay", {
+      .post("http://narayan.localhost:4500/api/orders/checkout/razorpay", {
         payment: payment,
-        VariantId: variantId,
-        quantity: quantity,
+        variantQuantities: [
+          { VariantId: 3, quantity: 1 },
+          { VariantId: 4, quantity: 1 },
+        ],
         UserStoreId: userStoreId,
+        AddressId: 2,
       })
       .then((response) => {
         const order = response.data;
@@ -31,7 +32,7 @@ const Subscription = () => {
           currency: "INR",
           name: "Your Company Name",
           description: "Product Purchase",
-          image: "https://dummyimage.com/600x400/000/fff",
+          image: "https://dummyimage.com/600x400/000/fff", // Placeholder image URL
           order_id: order.id,
           client: order.client,
           handler: function (response) {
@@ -42,7 +43,7 @@ const Subscription = () => {
 
             axios
               .post(
-                "http://localhost:4500/api/subscriptions/order/verify/razorpay",
+                "http://localhost:4500/api/subscriptions/orders/verify/razorpay",
                 {
                   razorpay_order_id: order.id,
                   razorpay_payment_id: response.razorpay_payment_id,
@@ -86,8 +87,15 @@ const Subscription = () => {
 
   return (
     <div className="flex items-center justify-center h-screen">
-      <div className="bg-white p-8 rounded shadow-lg max-w-md w-full">
+      <div className="bg-white p-8 rounded shadow-lg  max-w-md w-full">
         <h1 className="text-3xl font-bold mb-4 text-center">Make a Payment</h1>
+        <div className="mb-4">
+          <img
+            src="https://img.tatacliq.com/images/i8/437Wx649H/MP000000014710932_437Wx649H_202209301545141.jpeg"
+            alt="Product"
+            className="h-60 m-auto rounded mb-4"
+          />
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="payment" className="block text-gray-700 font-bold">
@@ -105,37 +113,7 @@ const Subscription = () => {
               <option value="COD">Cash on Delivery</option>
             </select>
           </div>
-          <div className="mb-4">
-            <label
-              htmlFor="variantId"
-              className="block text-gray-700 font-bold"
-            >
-              Variant ID:
-            </label>
-            <input
-              type="text"
-              id="variantId"
-              name="variantId"
-              value={variantId}
-              onChange={(e) => setVariantId(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="quantity" className="block text-gray-700 font-bold">
-              Quantity:
-            </label>
-            <input
-              type="number"
-              id="quantity"
-              name="quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
-              required
-            />
-          </div>
+          {/* User Store ID */}
           <div className="mb-4">
             <label
               htmlFor="userStoreId"
@@ -170,7 +148,7 @@ const Subscription = () => {
               required
             />
           </div>
-
+          {/* Submit Button */}
           <div className="text-center">
             <button
               type="submit"

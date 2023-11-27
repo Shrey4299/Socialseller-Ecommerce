@@ -32,9 +32,9 @@ module.exports = (app) => {
   router.post("/verify", subscriptionController.verify);
   router.post("/webhooks", subscriptionController.webhook);
   router.post("/webhooksCashfree", subscriptionController.webhookCashfree);
-  router.post("/order/cashfree/webhook", orderController.webhookCashfree);
-  router.post("/order/razorpay/webhook", orderController.webhook);
-  router.post("/order/verify/razorpay", orderController.verify);
+  router.post("/orders/cashfree/webhook", orderController.webhookCashfree);
+  router.post("/orders/razorpay/webhook", orderController.webhook);
+  router.post("/orders/verify/razorpay", orderController.verify);
 
   router.put(
     "/:id/cancel",

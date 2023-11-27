@@ -30,6 +30,7 @@ const address = require("../api/address/models/address");
 const order = require("../api/order/models/order");
 const order_variant = require("../api/order_variant/models/order_variant");
 const payment_log = require("../api/payment_log/models/payment_log");
+const custom_courier = require("../api/custom_courier/models/custom_courier");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -65,8 +66,8 @@ module.exports = async (sequelize) => {
   db.Order = order(sequelize);
   db.Order_variant = order_variant(sequelize);
   db.Payment_log = payment_log(sequelize);
+  db.Custom_courier = custom_courier(sequelize);
 
-  // ++++++ RELATIONS ++++++
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
   db.Product.belongsTo(db.Category, {
     foreignKey: "CategoryId",
@@ -80,7 +81,7 @@ module.exports = async (sequelize) => {
     foreignKey: "ThumbnailId",
     as: "thumbnail",
   });
-  // +++++++++ Relation with Media ++++++++++
+
   db.Variant.belongsTo(db.Media, {
     foreignKey: "ThumbnailId",
     as: "thumbnail",
@@ -126,13 +127,17 @@ module.exports = async (sequelize) => {
   });
 
   db.Lead.hasOne(db.Product, {
-    foreignKey: "LeadId", // This is the foreign key that will be dded to the Product model
-    as: "product", // Alias to access the associated produc
+    foreignKey: "LeadId",
+    as: "product",
   });
 
-  db.Product.belongsTo(db.Lead, {
-    foreignKey: "LeadId", // This should match the foreign key defned in db.Lead.hasOne
-    as: "lead", // Alias to access the associated lead
+  db.Lead.belongsTo(db.User_store, {
+    foreignKey: "AssignedTo",
+    as: "assigned_to",
+  });
+
+  db.User_store.hasMany(db.Lead, {
+    as: "leads",
   });
 
   db.Product_metrics.belongsTo(db.Product, {
@@ -141,7 +146,7 @@ module.exports = async (sequelize) => {
   });
 
   db.Product.hasOne(db.Product_metrics, {
-    foreignKey: "ProductId", // Assuming there is a PlanId in Product_metrics model
+    foreignKey: "ProductId",
     as: "product_metrics",
   });
 
@@ -171,15 +176,20 @@ module.exports = async (sequelize) => {
     as: "userStore",
   });
 
-  db.User_store.hasOne(db.Order);
-  db.Order.belongsTo(db.User_store);
-
   db.Cart.belongsTo(db.User_store, {
     foreignKey: "UserStoreId",
     as: "userStore",
   });
 
   // order realtions
+
+  db.User_store.hasOne(db.Order);
+  db.Order.belongsTo(db.User_store);
+
+  db.Order.belongsTo(db.Address, {
+    foreignKey: "AddressId",
+    as: "address",
+  });
 
   db.Order_variant.belongsTo(db.Variant, {
     foreignKey: "VariantId",
@@ -197,6 +207,8 @@ module.exports = async (sequelize) => {
     foreignKey: "OrderId",
     as: "orderVariants",
   });
+
+  db.Custom_courier.belongsTo(db.Order_variant);
 
   return db.sequelize;
 };

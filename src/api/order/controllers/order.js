@@ -4,12 +4,10 @@ const crypto = require("crypto");
 const getWebhookBody = require("../services/getWebhookBody");
 const uuid = require("uuid");
 const axios = require("axios");
-const verify = require("../services/cashfreeSignatureVerify");
 const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
 const productMetricsService = require("../../../services/productMetricsUpdate");
 const { handleSuccessfulOrder } = require("../services/orderHandler");
-const orederVariantCreation = require("../services/ordervariantCreation");
-const orederVariantUpdate = require("../services/ordervariantCreation");
+const orederVariantCreation = require("../services/ordervariantCreation.js");
 
 exports.create = async (req, res) => {
   try {
@@ -131,74 +129,51 @@ exports.delete = async (req, res) => {
 
 exports.checkOut = async (req, res) => {
   try {
-    console.log("entered in razorpay checkout");
+    console.log("Entered in razorpay checkout");
     const sequelize = req.db;
     const client = req.hostname.split(".")[0];
-    console.log(client + "this is client");
-    const { payment, UserStoreId, VariantId, quantity } = req.body;
+    console.log(client + " this is client");
 
-    const variant = await sequelize.models.Variant.findByPk(VariantId);
+    const { payment, UserStoreId, variantQuantities, AddressId } = req.body;
 
-    const amount = Number(variant.price * quantity);
+    if (!variantQuantities || !Array.isArray(variantQuantities)) {
+      return res
+        .status(400)
+        .json({ error: "Invalid variantQuantities in the request body" });
+    }
+
+    const variants = await sequelize.models.Variant.findAll();
+
+    const totalAmount = variantQuantities.reduce(
+      (sum, { VariantId, quantity }) => {
+        const variant = variants.find((v) => v.id === VariantId);
+        return sum + variant.price * quantity;
+      },
+      0
+    );
+
+    console.log(totalAmount + " this is total amount");
 
     const options = {
-      amount: Number(amount * 100),
+      amount: totalAmount * 100,
       currency: "INR",
       receipt: "RCT" + require("uid").uid(10).toUpperCase(),
     };
 
-    const prePaidOrder = razorpay.orders.create(
-      options,
-      async function (error, order) {
-        console.log(order);
-        if (error) {
-          return res.status(error.statusCode).send(
-            requestError({
-              status: error.statusCode,
-              message: error.error.reason,
-              details: error.error.description,
-            })
-          );
-        }
+    const razorpayOrder = await razorpay.orders.create(options);
 
-        await createOrder(order);
-        const orderWithClient = { ...order, client };
-        return res.status(200).send(orderWithClient);
-        // return res.status(200).send(...order, client);
-      }
+    await orederVariantCreation.createOrder(
+      razorpayOrder,
+      variants,
+      UserStoreId,
+      AddressId,
+      payment,
+      variantQuantities,
+      req
     );
 
-    const createOrder = async (order) => {
-      try {
-        const orderProduct = await sequelize.models.Order.create({
-          order_id: order.id,
-          price: amount,
-          UserStoreId: UserStoreId,
-          payment: payment,
-          status: "new",
-          address: "user address",
-          isPaid: false,
-        });
-
-        const result = await orederVariantCreation.createVariantOrder(
-          quantity,
-          VariantId,
-          orderProduct.id,
-          req,
-          res
-        );
-      } catch (error) {
-        console.log(error);
-        return error;
-      }
-    };
-
-    const productMetrics =
-      await productMetricsService.createOrUpdateProductMetrics(
-        sequelize,
-        variant,
-        amount
-      );
+    const orderWithClient = { ...razorpayOrder, client };
+    res.status(200).send(orderWithClient);
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "Failed to fetch subscription" });
@@ -207,23 +182,22 @@ exports.checkOut = async (req, res) => {
 
 exports.verify = async (req, res) => {
   try {
-    console.error("entered in razorpay verify");
-    console.info(req.body.client + " this is client in verify");
+    console.error("Entered in razorpay verify");
+    console.info(`${req.body.client} - This is the client in verify`);
 
+    const {
+      client,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
     const sequelize = req.db;
-    const client = req.body.client;
-    const razorpay_order_id = req.body.razorpay_order_id;
-    const razorpay_payment_id = req.body.razorpay_payment_id;
-    const razorpay_signature = req.body.razorpay_signature;
 
     console.log(razorpay_order_id + razorpay_payment_id);
     const generateSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
-
-    console.log(generateSignature);
-    console.log(razorpay_signature);
 
     if (generateSignature === razorpay_signature) {
       try {
@@ -244,11 +218,6 @@ exports.verify = async (req, res) => {
         client,
         razorpay_order_id,
         razorpay_payment_id
-      );
-
-      const orderVariantUpdate = await orederVariantCreation.updateOrderVariant(
-        razorpay_order_id,
-        client
       );
 
       return res.status(200).send(result);
@@ -489,12 +458,28 @@ exports.acceptOrder = async (req, res) => {
       return res.status(404).send({ error: "Order not found" });
     }
 
-    await order.update({ status: "accepted" });
+    const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
+      {
+        where: { OrderId: order.id },
+      }
+    );
 
-    return res.status(200).send({
-      message: "Order status updated to accepted successfully!",
-      data: order,
-    });
+    if (!orderVariantLinks || orderVariantLinks.length === 0) {
+      throw requestError({
+        message: "Order_variant_links not found for OrderId",
+      });
+    }
+
+    await Promise.all(
+      orderVariantLinks.map(async (orderVariantLink) => {
+        await sequelize.models.Order_variant.update(
+          { status: "ACCEPTED" },
+          { where: { id: orderVariantLink.OrderVariantId } }
+        );
+      })
+    );
+
+    return res.status(201).send({ message: "order is accepted" });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Failed to update the order status" });
@@ -513,12 +498,68 @@ exports.cancelOrder = async (req, res) => {
       return res.status(404).send({ error: "Order not found" });
     }
 
-    await order.update({ status: "cancelled" });
+    const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
+      {
+        where: { OrderId: order.id },
+      }
+    );
 
-    return res.status(200).send({
-      message: "Order status updated to cancelled successfully!",
-      data: order,
-    });
+    if (!orderVariantLinks || orderVariantLinks.length === 0) {
+      throw requestError({
+        message: "Order_variant_links not found for OrderId",
+      });
+    }
+
+    await Promise.all(
+      orderVariantLinks.map(async (orderVariantLink) => {
+        await sequelize.models.Order_variant.update(
+          { status: "CANCELLED" },
+          { where: { id: orderVariantLink.OrderVariantId } }
+        );
+      })
+    );
+
+    return res.status(201).send({ message: "order is cancelled" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to update the order status" });
+  }
+};
+
+exports.deliverOrder = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const Order = sequelize.models.Order;
+    const orderId = req.params.id;
+
+    const order = await Order.findByPk(orderId);
+
+    if (!order) {
+      return res.status(404).send({ error: "Order not found" });
+    }
+
+    const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
+      {
+        where: { OrderId: order.id },
+      }
+    );
+
+    if (!orderVariantLinks || orderVariantLinks.length === 0) {
+      throw requestError({
+        message: "Order_variant_links not found for OrderId",
+      });
+    }
+
+    await Promise.all(
+      orderVariantLinks.map(async (orderVariantLink) => {
+        await sequelize.models.Order_variant.update(
+          { status: "DELIVERED" },
+          { where: { id: orderVariantLink.OrderVariantId } }
+        );
+      })
+    );
+
+    return res.status(201).send({ message: "order is delivered" });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Failed to update the order status" });
@@ -545,33 +586,5 @@ exports.getOrdersByStatus = async (req, res) => {
     return res
       .status(500)
       .send({ error: "Failed to retrieve orders by status" });
-  }
-};
-
-exports.deliverOrder = async (req, res) => {
-  try {
-    const sequelize = req.db;
-    const Order = sequelize.models.Order;
-    const orderId = req.params.id;
-
-    // Find the order by ID
-    const order = await Order.findByPk(orderId);
-
-    if (!order) {
-      return res.status(404).send({ error: "Order not found" });
-    }
-
-    // Update the order status to "delivered"
-    await order.update({ status: "delivered" });
-
-    return res.status(200).send({
-      message: "Order marked as delivered successfully!",
-      data: order,
-    });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .send({ error: "Failed to mark the order as delivered" });
   }
 };

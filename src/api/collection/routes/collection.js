@@ -17,6 +17,7 @@ router.get("/", collectionController.findAll);
 router.get("/:id", collectionController.findOne);
 router.delete("/:id", collectionController.delete);
 router.get("/:id/products", collectionController.getProductsFromCollection);
+router.get("/:id/products/search", collectionController.searchProductsInCollection);
 
 module.exports = (app) => {
   app.use("/api/collection", router);

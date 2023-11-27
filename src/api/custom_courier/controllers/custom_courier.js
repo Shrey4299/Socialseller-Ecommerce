@@ -1,7 +1,7 @@
 exports.create = async (req, res) => {
   try {
     const sequelize = req.db;
-    const customerCourier = await sequelize.models.Customer_courier.create(
+    const customerCourier = await sequelize.models.Custom_courier.create(
       req.body
     );
     return res.status(200).send({
@@ -19,7 +19,7 @@ exports.update = async (req, res) => {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
     const [updatedRowsCount, updatedCustomerCourier] =
-      await sequelize.models.Customer_courier.update(req.body, {
+      await sequelize.models.Custom_courier.update(req.body, {
         where: { id: customerCourierId },
         returning: true,
       });
@@ -43,7 +43,7 @@ exports.findAll = async (req, res) => {
     const sequelize = req.db;
 
     console.log(sequelize);
-    const customerCouriers = await sequelize.models.Customer_courier.findAll();
+    const customerCouriers = await sequelize.models.Custom_courier.findAll();
     return res.status(200).send(customerCouriers);
   } catch (error) {
     console.error(error);
@@ -55,7 +55,7 @@ exports.findOne = async (req, res) => {
   try {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
-    const customerCourier = await sequelize.models.Customer_courier.findOne({
+    const customerCourier = await sequelize.models.Custom_courier.findOne({
       where: { id: customerCourierId },
       include: "subscription",
     });
@@ -75,7 +75,7 @@ exports.delete = async (req, res) => {
   try {
     const sequelize = req.db;
     const customerCourierId = req.params.id;
-    const deletedRowCount = await sequelize.models.Customer_courier.destroy({
+    const deletedRowCount = await sequelize.models.Custom_courier.destroy({
       where: { id: customerCourierId },
     });
     if (deletedRowCount === 0) {

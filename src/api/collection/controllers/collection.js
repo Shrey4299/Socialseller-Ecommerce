@@ -1,4 +1,5 @@
 const { getPagination, getMeta } = require("../../../services/pagination");
+const { Op } = require("sequelize");
 
 exports.create = async (req, res) => {
   try {
@@ -120,5 +121,42 @@ exports.getProductsFromCollection = async (req, res) => {
     return res
       .status(500)
       .send({ error: "Failed to fetch products from Collection" });
+  }
+};
+
+exports.searchProductsInCollection = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const { id } = req.params;
+    const { query } = req.query;
+
+    console.log(id + " this is id");
+
+    const pagination = await getPagination(req.query.pagination);
+
+    const products = await sequelize.models.Product.findAll({
+      where: {
+        CollectionId: id,
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${query}%` } },
+          { description: { [Op.iLike]: `%${query}%` } },
+        ],
+      },
+      offset: pagination.offset,
+      limit: pagination.limit,
+    });
+
+    if (products.length > 0) {
+      const meta = await getMeta(pagination, products.length);
+      return res.status(200).send({ data: products, meta });
+    } else {
+      return res.status(404).send({
+        error:
+          "No products found in the specified category with the given search query",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch products" });
   }
 };

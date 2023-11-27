@@ -1,9 +1,9 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Customer_courier = sequelize.define("Customer_courier", {
+  const Custom_courier = sequelize.define("Custom_courier", {
     image: {
-      type: DataTypes.STRING, // Assuming you're storing the image path as a string
+      type: DataTypes.STRING, 
       allowNull: true,
     },
     trackingId: {
@@ -24,5 +24,5 @@ module.exports = (sequelize) => {
     },
   });
 
-  return Customer_courier;
+  return Custom_courier;
 };

@@ -34,10 +34,11 @@ module.exports = (req, res, next) => {
     "groups",
     "user_store",
     "address",
-    "order",
+    "orders",
     "payment_log",
     "public",
     "order_variant",
+    "custom_courier",
   ];
   if (
     parts.length > 1 &&
@@ -69,7 +70,6 @@ module.exports = (req, res, next) => {
       "roles",
       "admin",
       "subscriptions",
-      "custom_courier",
       "plans",
       "plan_metrics",
       "globals",
