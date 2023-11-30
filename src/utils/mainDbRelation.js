@@ -15,7 +15,6 @@ const free_plan = require("../api/free_plan/models/free_plan");
 const plan_metrics = require("../api/plan_metrics/models/plan_metrics"); // Added Plan_metrics
 const user_metrics = require("../api/user_metrics/models/user_metrics"); // Added Plan_metrics
 const activity_log = require("../api/activity_log/models/activity_log");
-const wallet = require("../api/wallet/models/wallet");
 const transaction = require("../api/transaction/models/transaction");
 
 module.exports = async (sequelize) => {
@@ -38,7 +37,6 @@ module.exports = async (sequelize) => {
   db.Activity_log = activity_log(sequelize);
   db.Plan_metrics = plan_metrics(sequelize);
   db.User_metrics = user_metrics(sequelize);
-  db.Wallet = wallet(sequelize);
   db.Transaction = transaction(sequelize);
 
   // User -> Role
@@ -88,15 +86,7 @@ module.exports = async (sequelize) => {
     as: "user_metrics",
   });
 
-  db.User.hasMany(db.Wallet, {
-    foreignKey: "UserId",
-    as: "wallets",
-  });
 
-  db.Wallet.belongsTo(db.Subscription, {
-    foreignKey: "SubscriptionId",
-    as: "subscription",
-  });
 
   db.User.hasMany(db.Transaction, {
     foreignKey: "UserId",

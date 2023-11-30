@@ -10,6 +10,8 @@ module.exports = (app) => {
 
   router.get("/", ordersController.findAll);
   router.post("/", ordersController.create);
+  router.get("/search", ordersController.searchOrders);
+
   router.get("/:id", ordersController.findOne);
   router.put("/:id", ordersController.update);
 

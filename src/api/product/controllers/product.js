@@ -37,7 +37,6 @@ exports.create = async (req, res) => {
     );
 
     const tags = body.tags;
-    // creating tags
     let createdTags;
     if (tags.length > 0) {
       createdTags = await blukTag({ sequelize, tags, ProductId: product.id });
@@ -175,7 +174,6 @@ exports.search = async (req, res) => {
     const sequelize = req.db;
     const query = req.query;
     const qs = query.qs.trim();
-    const tags = query?.tags?.toLowerCase().split("_");
     const pagination = await getPagination(query.pagination);
 
     const products = await sequelize.models.Product.findAndCountAll({
@@ -265,5 +263,47 @@ exports.findByPrice = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).send(error);
+  }
+};
+
+exports.findNRandom = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const n = req.params.n || 1;
+
+    console.log("this is a random" + n);
+
+    const products = await sequelize.models.Product.findAll({
+      order: sequelize.literal("RANDOM()"),
+      limit: n,
+    });
+
+    return res.status(200).send(products);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch products" });
+  }
+};
+
+exports.findNRandomInCategory = async (req, res) => {
+  try {
+    const sequelize = req.db;
+    const n = req.params.n || 1;
+    
+
+    console.log("this is a random" + n);
+
+    const products = await sequelize.models.Product.findAll({
+      where: {
+        CategoryId: req.params.id,
+      },
+      order: sequelize.literal("RANDOM()"),
+      limit: n,
+    });
+
+    return res.status(200).send(products);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch products" });
   }
 };

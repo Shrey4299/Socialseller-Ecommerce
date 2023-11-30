@@ -3,9 +3,6 @@ const app = require("../../server");
 module.exports = (req, res, next) => {
   console.log(req.hostname + " this is hostname");
 
-  if (!req.url.includes("webhook")) {
-    console.log("url with webhook");
-  }
   const parts = req.hostname.split(".");
   let sharedRoutes = [
     "products",
@@ -39,6 +36,7 @@ module.exports = (req, res, next) => {
     "public",
     "order_variant",
     "custom_courier",
+    "wallets",
   ];
   if (
     parts.length > 1 &&

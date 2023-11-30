@@ -23,7 +23,7 @@ module.exports = (sequelize) => {
       allowNull: true,
     },
     proof: {
-      type: DataTypes.STRING, // Assuming the proof is stored as a file path or URL
+      type: DataTypes.STRING, 
       allowNull: true,
     },
     OrderId: {

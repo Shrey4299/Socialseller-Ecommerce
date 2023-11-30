@@ -8,6 +8,8 @@ const getCashfreeWebhookBody = require("../services/getCashfreeWebhookBody");
 const productMetricsService = require("../../../services/productMetricsUpdate");
 const { handleSuccessfulOrder } = require("../services/orderHandler");
 const orederVariantCreation = require("../services/ordervariantCreation.js");
+const { Op } = require("sequelize");
+const { getPagination, getMeta } = require("../../../services/pagination");
 
 exports.create = async (req, res) => {
   try {
@@ -586,5 +588,32 @@ exports.getOrdersByStatus = async (req, res) => {
     return res
       .status(500)
       .send({ error: "Failed to retrieve orders by status" });
+  }
+};
+
+exports.searchOrders = async (req, res) => {
+  try {
+    console.log("entering search");
+    const sequelize = req.db;
+    const query = req.query;
+    const qs = query.qs.trim();
+    const pagination = await getPagination(query.pagination);
+
+    const orders = await sequelize.models.Order.findAll({
+      where: {
+        [Op.or]: [
+          { order_id: { [Op.iLike]: `%${qs}%` } },
+          { payment_order_id: { [Op.iLike]: `%${qs}%` } },
+        ],
+      },
+      offset: pagination.offset,
+      limit: pagination.limit,
+    });
+
+    const meta = await getMeta(pagination, orders.length);
+    return res.status(200).send({ data: orders, meta });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to fetch orders" });
   }
 };

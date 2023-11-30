@@ -15,8 +15,11 @@ module.exports = (app) => {
     userStoreController.update
   );
   router.get("/", userStoreController.findAll);
+  router.get("/me", userStoreController.getMe);
+  router.get("/search", userStoreController.search);
   router.get("/:id", userStoreController.findOne);
   router.delete("/:id", userStoreController.delete);
+  router.post("/login", userStoreController.login);
 
-  app.use("/api/user_store", router); // Adjust the route here
+  app.use("/api/user_store", router);
 };

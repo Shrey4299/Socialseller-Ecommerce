@@ -2,8 +2,9 @@ const router = require("express").Router();
 const walletController = require("../controllers/wallet");
 
 module.exports = (app) => {
-  router.post("/wallets/", walletController.create);
-  router.get("/wallets/", walletController.find);
+  router.post("/", walletController.create);
+  router.get("/", walletController.find);
+  router.put("/update/:id", walletController.updateWallet);
 
-  app.use("/api", router);
+  app.use("/api/wallets/", router);
 };

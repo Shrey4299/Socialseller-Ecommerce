@@ -35,3 +35,35 @@ exports.find = async (req, res) => {
     return res.status(500).send({ error: "Failed to fetch wallets" });
   }
 };
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+
+exports.updateWallet = async (req, res) => {
+  try {
+    const userStore = await req.db.models.User_store.findOne({
+      where: { id: req.params.id },
+    });
+
+    if (req.body.transaction_type == "DEBIT") {
+      console.log("entering CREDIT transaction");
+      await userStore.update({
+        wallet_balance: userStore.wallet_balance + req.body.wallet_balance,
+      });
+    } else {
+      await userStore.update({
+        wallet_balance: userStore.wallet_balance - req.body.wallet_balance,
+      });
+    }
+
+    return res
+      .status(200)
+      .send({ message: "Wallet updated successfully!", data: userStore });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Failed to update wallet" });
+  }
+};

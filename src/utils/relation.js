@@ -31,6 +31,7 @@ const order = require("../api/order/models/order");
 const order_variant = require("../api/order_variant/models/order_variant");
 const payment_log = require("../api/payment_log/models/payment_log");
 const custom_courier = require("../api/custom_courier/models/custom_courier");
+const wallet = require("../api/wallet/models/wallet");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -67,6 +68,7 @@ module.exports = async (sequelize) => {
   db.Order_variant = order_variant(sequelize);
   db.Payment_log = payment_log(sequelize);
   db.Custom_courier = custom_courier(sequelize);
+  db.Wallet = wallet(sequelize);
 
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
   db.Product.belongsTo(db.Category, {
@@ -209,6 +211,21 @@ module.exports = async (sequelize) => {
   });
 
   db.Custom_courier.belongsTo(db.Order_variant);
+
+  db.User_store.hasMany(db.Wallet, {
+    foreignKey: "UserId",
+    as: "wallets",
+  });
+
+  db.Wallet.belongsTo(db.User_store, {
+    foreignKey: "UserId",
+    as: "userStore",
+  });
+
+  db.Wallet.belongsTo(db.Order, {
+    foreignKey: "OrderId",
+    as: "order",
+  });
 
   return db.sequelize;
 };

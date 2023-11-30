@@ -21,15 +21,18 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
     },
+    wallet_balance: {
+      type: DataTypes.FLOAT,
+      // allowNull: false,
+      defaultValue: 0,
+    },
   });
 
-  // Hash the password before creating a new user
   User_store.beforeCreate(async (user) => {
     const hashedPassword = await bcrypt.hash(user.password, 10);
     user.password = hashedPassword;
   });
 
-  // Hash the password before updating a user if the password has changed
   User_store.beforeUpdate(async (user) => {
     if (user.changed("password")) {
       const hashedPassword = await bcrypt.hash(user.password, 10);

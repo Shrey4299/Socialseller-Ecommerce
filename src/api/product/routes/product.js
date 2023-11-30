@@ -25,5 +25,8 @@ module.exports = (app) => {
     [RBAC, Joi.filterValidator],
     productController.findByPrice
   );
+  router.get("/products/:n/random", productController.findNRandom);
+  router.get("/products/:n/random/category/:id", productController.findNRandom);
+
   app.use("/api", router);
 };
