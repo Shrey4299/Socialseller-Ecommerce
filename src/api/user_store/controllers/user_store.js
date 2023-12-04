@@ -78,7 +78,6 @@ exports.update = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    console.log(req);
     const sequelize = req.db;
     const userStores = await sequelize.models.User_store.findAll();
 

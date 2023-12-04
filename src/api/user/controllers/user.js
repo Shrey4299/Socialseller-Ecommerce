@@ -1,6 +1,7 @@
 const dbCache = require("../../../utils/dbCache");
 const { Sequelize, where } = require("sequelize");
 const createDB = require("../services/createDB");
+const createUserStore = require("../services/createUserStore");
 const relation = require("../../../utils/relation");
 const jwt = require("../../../services/jwt");
 const { hash, compare } = require("../../../services/bcrypt");
@@ -102,6 +103,12 @@ module.exports = {
         const userMetricsUpdateResult = await createUserMetrics(
           sequelize,
           createUser.id
+        );
+
+        const storeUser = await createUserStore.createUserStore(
+          req,
+          res,
+          subdomain
         );
         return res.status(200).send({
           message: {

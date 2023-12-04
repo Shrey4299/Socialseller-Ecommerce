@@ -2,13 +2,18 @@
 const router = require("express").Router();
 const ordersController = require("../controllers/order");
 const ordersMiddlware = require("../middlewares/order");
+const StoreRABC = require("../../../middlewares/StoreRBAC");
 
 module.exports = (app) => {
-  router.post("/checkout/cashfree", ordersController.createCashfreeOrder);
+  router.post(
+    "/checkout/cashfree",
+    [StoreRABC],
+    ordersController.createCashfreeOrder
+  );
   router.get("/verify/cashfree", ordersController.verifyCashfree);
   router.post("/webhook/cashfree", ordersController.webhookCashfree);
 
-  router.get("/", ordersController.findAll);
+  router.get("/", [StoreRABC], ordersController.findAll);
   router.post("/", ordersController.create);
   router.get("/search", ordersController.searchOrders);
 
@@ -17,7 +22,7 @@ module.exports = (app) => {
 
   router.post(
     "/checkout/razorpay",
-    // ordersMiddlware.validateRequest,
+    [StoreRABC, ordersMiddlware.validateRequest],
     ordersController.checkOut
   );
   router.post("/verify/razorpay", ordersController.verify);

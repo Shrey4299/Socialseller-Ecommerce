@@ -18,12 +18,9 @@ module.exports = (sequelize) => {
     },
     phoneNumber: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
     },
     wallet_balance: {
       type: DataTypes.FLOAT,
-      // allowNull: false,
       defaultValue: 0,
     },
   });

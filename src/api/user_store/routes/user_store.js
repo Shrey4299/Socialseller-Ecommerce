@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userStoreController = require("../controllers/user_store");
 const userStoreMiddleware = require("../middlewares/user_store");
+const StoreRBCA = require("../../../middlewares/StoreRBAC");
 
 module.exports = (app) => {
   router.post(
@@ -14,7 +15,7 @@ module.exports = (app) => {
     userStoreMiddleware.validateUserStore,
     userStoreController.update
   );
-  router.get("/", userStoreController.findAll);
+  router.get("/", [StoreRBCA], userStoreController.findAll);
   router.get("/me", userStoreController.getMe);
   router.get("/search", userStoreController.search);
   router.get("/:id", userStoreController.findOne);

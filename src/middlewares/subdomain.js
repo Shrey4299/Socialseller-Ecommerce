@@ -37,6 +37,8 @@ module.exports = (req, res, next) => {
     "order_variant",
     "custom_courier",
     "wallets",
+    "roles",
+    "permissions",
   ];
   if (
     parts.length > 1 &&

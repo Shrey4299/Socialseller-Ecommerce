@@ -1,10 +1,10 @@
 const jwt = require("../services/jwt");
 const dbCache = require("../utils/dbCache");
-const { requestError } = require("../services/errors");
+const { requestError, tokenError } = require("../services/errors");
 
 module.exports = async (req, res, next) => {
   try {
-    const sequelize = await dbCache.get("main_instance");
+    const sequelize = req.db;
     let endpoint = req.api;
     let params = req.params;
     endpoint = Object.entries(params).reduce(
@@ -16,13 +16,15 @@ module.exports = async (req, res, next) => {
       where: [{ endpoint }, { method: req.method }],
     });
 
+    console.log(Permission);
+
     if (!Permission) {
       return res.status(403).send(
         requestError({
           status: 403,
           name: "ForbiddenError",
           message: "Forbidden",
-          details: "You don't have permission to access this route",
+          details: "No permission to access this route",
         })
       );
     }
@@ -31,7 +33,9 @@ module.exports = async (req, res, next) => {
       where: { PermissionId: Permission.id },
     });
 
-    if (!Role_permissions || Role_permissions.length === 0) {
+    console.log(Role_permissions);
+
+    if (!Role_permissions) {
       return res.status(403).send(
         requestError({
           status: 403,
@@ -44,33 +48,33 @@ module.exports = async (req, res, next) => {
 
     const parts = req.hostname.split(".");
     let subdomain = parts[0];
-    let user, role;
+    let role;
 
     if (req.headers.authorization) {
       const token = jwt.verify(req);
-      if (token.error) return res.status(400).send({ error: token.error });
-      user = await sequelize.models.User.findOne({
-        where: { id: token.id },
-        include: [{ model: sequelize.models.Role, as: "role" }],
-      });
+      if (token.error) {
+        return res.status(401).send(tokenError(token));
+      }
+
+      const user = await sequelize.models.User_store.findByPk(token.id);
 
       if (!user) {
-        return res.status(403).send(
+        return res.status(400).send(
           requestError({
-            status: 403,
-            name: "ForbiddenError",
-            message: "Forbidden",
-            details: "You don't have permission to access this route",
+            message: "Invalid Data!",
+            details: "Invalid payload data found in the token!",
           })
         );
       }
-      role = user.role;
+
+      role = user.RoleId;
+
+      console.log(role + " role");
     } else {
       // const getrole = await sequelize.models.Role.findOne({
       //   where: { name: "public" },
       // });
-      // role = getrole;
-
+      // role = getrole.id;
       return res.status(403).send(
         requestError({
           status: 403,
@@ -81,11 +85,9 @@ module.exports = async (req, res, next) => {
       );
     }
 
-    console.log(role);
-
     for (const Role_permission of Role_permissions) {
       if (
-        Role_permission.RoleId === role.id &&
+        Role_permission.RoleId === role &&
         Role_permission.PermissionId === Permission.id
       ) {
         console.log("Role is matched");

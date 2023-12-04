@@ -32,6 +32,9 @@ const order_variant = require("../api/order_variant/models/order_variant");
 const payment_log = require("../api/payment_log/models/payment_log");
 const custom_courier = require("../api/custom_courier/models/custom_courier");
 const wallet = require("../api/wallet/models/wallet");
+const role = require("../api/role/models/role");
+const permission = require("../api/permission/models/permission");
+const role_permission = require("../api/permission/models/role_permission");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -69,6 +72,20 @@ module.exports = async (sequelize) => {
   db.Payment_log = payment_log(sequelize);
   db.Custom_courier = custom_courier(sequelize);
   db.Wallet = wallet(sequelize);
+  db.Role = role(sequelize);
+  db.Permission = permission(sequelize);
+  db.Role_permission = role_permission(sequelize);
+
+  db.Role.hasMany(db.User_store, { foreignKey: "RoleId", as: "users_store" });
+  db.User_store.belongsTo(db.Role, { foreignKey: "RoleId", as: "role" });
+  db.Role.belongsToMany(db.Permission, {
+    as: "permissions",
+    through: db.Role_permission,
+  });
+  db.Permission.belongsToMany(db.Role, {
+    as: "roles",
+    through: db.Role_permission,
+  });
 
   db.Category.hasMany(db.Product, { foreignKey: "CategoryId", as: "products" });
   db.Product.belongsTo(db.Category, {
