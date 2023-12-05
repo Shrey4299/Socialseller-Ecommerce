@@ -11,6 +11,8 @@ exports.createVariantOrder = async (quantity, VariantId, OrderId, req, res) => {
       return res.status(404).send({ error: "Variant not found" });
     }
 
+    await variant.update({ quantity: variant.quantity - quantity });
+
     const orderVariant = await sequelize.models.Order_variant.create({
       quantity: quantity,
       price: variant.price * quantity,
