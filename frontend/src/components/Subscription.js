@@ -7,22 +7,31 @@ const Subscription = () => {
   const defaultPhoneNumber = "8085705849"; // Set your default phone number here
 
   const [payment, setPayment] = useState("prepaid");
-  const [userStoreId, setUserStoreId] = useState(1);
+  const [userStoreId, setUserStoreId] = useState(2);
   const [phoneNumber, setPhoneNumber] = useState(defaultPhoneNumber);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     axios
-      .post("http://narayan.localhost:4500/api/orders/checkout/razorpay", {
-        payment: payment,
-        variantQuantities: [
-          { VariantId: 3, quantity: 1 },
-          { VariantId: 4, quantity: 1 },
-        ],
-        UserStoreId: userStoreId,
-        AddressId: 2,
-      })
+      .post(
+        "http://narayan.localhost:4500/api/orders/checkout/razorpay",
+        {
+          payment: payment,
+          variantQuantities: [
+            { VariantId: 3, quantity: 1 },
+            { VariantId: 4, quantity: 1 },
+          ],
+          UserStoreId: userStoreId,
+          AddressId: 2,
+        },
+        {
+          headers: {
+            Authorization:
+              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzAxNDk5NDI5LCJleHAiOjE3MDIxMDQyMjl9.XCIF7bnAAbHJb35M1FBtOINOlshxnZvAWafACBQjago",
+          },
+        }
+      )
       .then((response) => {
         const order = response.data;
 

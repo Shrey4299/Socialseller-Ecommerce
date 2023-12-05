@@ -10,6 +10,8 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM(
         "ADMIN_LOG_IN",
         "RESELLER_LOG_IN",
+        "USER_LOG_IN",
+        "STAFF_LOG_IN",
         "ORDER_PLACED",
         "ORDER_ACCEPTED",
         "ORDER_DECLINED",

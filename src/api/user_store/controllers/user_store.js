@@ -9,6 +9,7 @@ const jwt = require("../../../services/jwt");
 const { hash, compare } = require("../../../services/bcrypt");
 const { tokenError, requestError } = require("../../../services/errors");
 const bcrypt = require("bcrypt");
+const createActivityLog = require("../services/user_store");
 
 exports.create = async (req, res) => {
   try {
@@ -169,7 +170,6 @@ exports.login = async (req, res) => {
       return res.status(400).send({ message: "Invalid User Credentials!" });
     }
 
-    // const isMatched = await bcrypt.compare(password, findUser.password);
     const isMatched = await compare(password, findUser.password);
 
     if (!isMatched) {
@@ -179,6 +179,13 @@ exports.login = async (req, res) => {
     }
 
     const token = await jwt.issue({ id: findUser.id });
+    const activity_log = await createActivityLog.createActivityLog(
+      sequelize,
+      findUser.id,
+      findUser.RoleId,
+      res
+    );
+
     return res.status(200).send({ jwt: token, user: findUser });
   } catch (error) {
     console.log(error);

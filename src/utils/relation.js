@@ -35,6 +35,7 @@ const wallet = require("../api/wallet/models/wallet");
 const role = require("../api/role/models/role");
 const permission = require("../api/permission/models/permission");
 const role_permission = require("../api/permission/models/role_permission");
+const activity_log = require("../api/activity_log/models/activity_log");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -75,6 +76,7 @@ module.exports = async (sequelize) => {
   db.Role = role(sequelize);
   db.Permission = permission(sequelize);
   db.Role_permission = role_permission(sequelize);
+  db.Activity_log = activity_log(sequelize);
 
   db.Role.hasMany(db.User_store, { foreignKey: "RoleId", as: "users_store" });
   db.User_store.belongsTo(db.Role, { foreignKey: "RoleId", as: "role" });
@@ -242,6 +244,15 @@ module.exports = async (sequelize) => {
   db.Wallet.belongsTo(db.Order, {
     foreignKey: "OrderId",
     as: "order",
+  });
+
+  db.User_store.hasMany(db.Activity_log, {
+    foreignKey: "UserStoreId",
+    as: "activity_logs",
+  });
+  db.Activity_log.belongsTo(db.User_store, {
+    foreignKey: "UserStoreId",
+    as: "user",
   });
 
   return db.sequelize;
