@@ -1,4 +1,4 @@
-// Controller functions for Campaign model
+const createActivityLog = require("../../../services/createActivityLog");
 
 /**
  * Controller function to create a new campaign
@@ -9,6 +9,14 @@ exports.create = async (req, res) => {
   try {
     const sequelize = req.db;
     const campaign = await sequelize.models.Campaign.create(req.body);
+
+    const campaignActivityLog = await createActivityLog.createActivityLog(
+      req,
+      res,
+      "NEW_CAMPAIGN_ADDED",
+      "New campaign created successfully!"
+    );
+
     return res
       .status(200)
       .send({ message: "Campaign Created Successfully!", data: campaign });
@@ -35,12 +43,10 @@ exports.update = async (req, res) => {
     if (updatedRowsCount === 0) {
       return res.status(404).send({ error: "Campaign not found" });
     }
-    return res
-      .status(200)
-      .send({
-        message: "Campaign Updated Successfully!",
-        data: updatedCampaign[0],
-      });
+    return res.status(200).send({
+      message: "Campaign Updated Successfully!",
+      data: updatedCampaign[0],
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Failed to update the campaign" });

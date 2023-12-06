@@ -1,10 +1,12 @@
 const { getPagination, getMeta } = require("../../../services/pagination");
 const { Op } = require("sequelize");
+const activity_log = require("../../../services/createActivityLog");
 
 exports.create = async (req, res) => {
   try {
     const sequelize = req.db;
     const collection = await sequelize.models.Collection.create(req.body);
+    const collectionActivityLog = await activity_log.createActivityLog(req, res, "NEW_COLLECTION_ADDED", "new collection created successfully");
     return res
       .status(200)
       .send({ message: "Collection Created Successfully!", data: collection });

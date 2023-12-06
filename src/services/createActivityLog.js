@@ -1,6 +1,5 @@
-const jwt = require("../../../services/jwt");
-const { tokenError, requestError } = require("../../../services/errors");
-const dbCache = require("../../../utils/dbCache");
+const jwt = require("../services/jwt");
+const { tokenError, requestError } = require("../services/errors");
 
 const createBody = (description, event, userId) => ({
   description,
@@ -8,10 +7,9 @@ const createBody = (description, event, userId) => ({
   UserStoreId: userId,
 });
 
-exports.createActivityLog = async (req, res, client, event, description) => {
+exports.createActivityLog = async (req, res, event, description) => {
   try {
-    const subdomain = client;
-    const sequelize = dbCache.get(subdomain);
+    const sequelize = req.db;
     const token = jwt.verify(req);
     if (token.error) {
       return res.status(401).send(tokenError(token));

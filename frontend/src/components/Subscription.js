@@ -58,6 +58,12 @@ const Subscription = () => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   client: order.client,
+                },
+                {
+                  headers: {
+                    Authorization:
+                      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzAxNDk5NDI5LCJleHAiOjE3MDIxMDQyMjl9.XCIF7bnAAbHJb35M1FBtOINOlshxnZvAWafACBQjago",
+                  },
                 }
               )
               .then(function (response) {

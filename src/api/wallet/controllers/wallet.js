@@ -1,4 +1,6 @@
 // Controller function to create a new post
+const createActivityLog = require("../../../services/createActivityLog");
+
 /**
  *
  * @param {import("express").Request} req
@@ -53,10 +55,23 @@ exports.updateWallet = async (req, res) => {
       await userStore.update({
         wallet_balance: userStore.wallet_balance + req.body.wallet_balance,
       });
+
+      const walletDebitActivityLog = await createActivityLog.createActivityLog(
+        req,
+        res,
+        "WALLET_DEBIT",
+        "wallet debited successfully!"
+      );
     } else {
       await userStore.update({
         wallet_balance: userStore.wallet_balance - req.body.wallet_balance,
       });
+      const walletDebitActivityLog = await createActivityLog.createActivityLog(
+        req,
+        res,
+        "WALLET_CREDIT",
+        "wallet credited successfully!"
+      );
     }
 
     return res

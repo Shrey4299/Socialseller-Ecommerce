@@ -16,8 +16,6 @@ module.exports = async (req, res, next) => {
       where: [{ endpoint }, { method: req.method }],
     });
 
-    console.log(Permission);
-
     if (!Permission) {
       return res.status(403).send(
         requestError({
@@ -28,12 +26,11 @@ module.exports = async (req, res, next) => {
         })
       );
     }
+    
 
     const Role_permissions = await sequelize.models.Role_permission.findAll({
       where: { PermissionId: Permission.id },
     });
-
-    console.log(Role_permissions);
 
     if (!Role_permissions) {
       return res.status(403).send(
@@ -68,8 +65,6 @@ module.exports = async (req, res, next) => {
       }
 
       role = user.RoleId;
-
-      console.log(role + " role");
     } else {
       // const getrole = await sequelize.models.Role.findOne({
       //   where: { name: "public" },

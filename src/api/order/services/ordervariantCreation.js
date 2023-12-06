@@ -1,4 +1,7 @@
 const crypto = require("crypto");
+const jwt = require("../../../services/jwt");
+const { tokenError, requestError } = require("../../../services/errors");
+const dbCache = require("../../../utils/dbCache");
 
 exports.createVariantOrder = async (quantity, VariantId, OrderId, req, res) => {
   try {
@@ -68,6 +71,26 @@ exports.createOrder = async (
     console.log(error);
     throw error;
   }
+};
+exports.getUserId = async (req, res) => {
+  const sequelize = req.db;
+  const token = jwt.verify(req);
+  if (token.error) {
+    return res.status(401).send(tokenError(token));
+  }
+  const findUser = await sequelize.models.User_store.findByPk(token.id);
+
+  if (!findUser) {
+    return res.status(400).send(
+      requestError({
+        message: "Invalid Data!",
+        details: "Invalid payload data found in token!",
+      })
+    );
+  }
+
+  console.log(findUser.id + "this is user id")
+  return findUser.id;
 };
 
 const generateOrderId = () => {

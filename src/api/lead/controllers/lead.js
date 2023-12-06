@@ -4,6 +4,7 @@ const { Op } = require("sequelize");
 const { requestError } = require("../../../services/errors");
 const orderBy = require("../../../services/orderBy");
 const { getPagination, getMeta } = require("../../../services/pagination");
+const createActivityLog = require("../../../services/createActivityLog");
 
 /**
  *
@@ -15,6 +16,12 @@ exports.create = async (req, res) => {
     // console.log("Sequelize Dialect:", req.db.options);
     const sequelize = req.db;
     const lead = await sequelize.models.Lead.create(req.body);
+    const leadActivityLog = await createActivityLog.createActivityLog(
+      req,
+      res,
+      "NEW_LEAD_ADDED",
+      "New lead created successfully!"
+    );
 
     // const id = 1;
     // const user = await sequelize.models.User.findOne({

@@ -1,4 +1,3 @@
-const { requestError } = require("../../../services/errors");
 const { razorpay } = require("../../../utils/gateway");
 const crypto = require("crypto");
 const getWebhookBody = require("../services/getWebhookBody");
@@ -10,6 +9,10 @@ const { handleSuccessfulOrder } = require("../services/orderHandler");
 const orederVariantCreation = require("../services/ordervariantCreation.js");
 const { Op } = require("sequelize");
 const { getPagination, getMeta } = require("../../../services/pagination");
+const createActivityLog = require("../services/createActivityLog");
+const jwt = require("../../../services/jwt");
+const { tokenError, requestError } = require("../../../services/errors");
+const dbCache = require("../../../utils/dbCache");
 
 exports.create = async (req, res) => {
   try {
@@ -136,7 +139,9 @@ exports.checkOut = async (req, res) => {
     const client = req.hostname.split(".")[0];
     console.log(client + " this is client");
 
-    const { payment, UserStoreId, variantQuantities, AddressId } = req.body;
+    const UserStoreId = await orederVariantCreation.getUserId(req, res);
+
+    const { payment, variantQuantities, AddressId } = req.body;
 
     if (!variantQuantities || !Array.isArray(variantQuantities)) {
       return res
@@ -220,6 +225,14 @@ exports.verify = async (req, res) => {
         client,
         razorpay_order_id,
         razorpay_payment_id
+      );
+
+      const orderplace = await createActivityLog.createActivityLog(
+        req,
+        res,
+        client,
+        "ORDER_PLACED",
+        "Order is placed successfully!"
       );
 
       return res.status(200).send(result);
@@ -451,6 +464,8 @@ exports.webhookCashfree = async (req, res, buf) => {
 exports.acceptOrder = async (req, res) => {
   try {
     const sequelize = req.db;
+    const client = req.hostname.split(".")[0];
+
     const Order = sequelize.models.Order;
     const orderId = req.params.id;
 
@@ -481,6 +496,14 @@ exports.acceptOrder = async (req, res) => {
       })
     );
 
+    const orderAccept = await createActivityLog.createActivityLog(
+      req,
+      res,
+      client,
+      "ORDER_ACCEPTED",
+      "Order is accepted successfully!"
+    );
+
     return res.status(201).send({ message: "order is accepted" });
   } catch (error) {
     console.error(error);
@@ -493,6 +516,7 @@ exports.cancelOrder = async (req, res) => {
     const sequelize = req.db;
     const Order = sequelize.models.Order;
     const orderId = req.params.id;
+    const client = req.hostname.split(".")[0];
 
     const order = await Order.findByPk(orderId);
 
@@ -521,6 +545,14 @@ exports.cancelOrder = async (req, res) => {
       })
     );
 
+    const orderDeclined = await createActivityLog.createActivityLog(
+      req,
+      res,
+      client,
+      "ORDER_DECLINED",
+      "Order is declined successfully!"
+    );
+
     return res.status(201).send({ message: "order is cancelled" });
   } catch (error) {
     console.error(error);
@@ -533,6 +565,7 @@ exports.deliverOrder = async (req, res) => {
     const sequelize = req.db;
     const Order = sequelize.models.Order;
     const orderId = req.params.id;
+    const client = req.hostname.split(".")[0];
 
     const order = await Order.findByPk(orderId);
 
@@ -559,6 +592,14 @@ exports.deliverOrder = async (req, res) => {
           { where: { id: orderVariantLink.OrderVariantId } }
         );
       })
+    );
+
+    const orderDelivered = await createActivityLog.createActivityLog(
+      req,
+      res,
+      client,
+      "ORDER_DELIVERED",
+      "Order is delivered successfully!"
     );
 
     return res.status(201).send({ message: "order is delivered" });

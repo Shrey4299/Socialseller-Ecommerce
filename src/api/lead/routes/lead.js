@@ -3,6 +3,8 @@ const router = require("express").Router();
 const RBAC = require("../../../middlewares/RBAC");
 const leadController = require("../controllers/lead");
 const { validateRequest } = require("../middlewares/lead");
+const StoreRABC = require("../../../middlewares/StoreRBAC");
+
 
 // Define routes for the "Post" resource
 module.exports = (app) => {

@@ -1,9 +1,18 @@
+const createActivityLog = require("../../../services/createActivityLog");
+
 exports.create = async (req, res) => {
   try {
     const sequelize = req.db;
     const { name, url } = req.body;
 
     const group = await sequelize.models.Group.create({ name, url });
+
+    const groupActivityLog = await createActivityLog.createActivityLog(
+      req,
+      res,
+      "NEW_GROUP_ADDED",
+      "New group created successfully!"
+    );
 
     return res.status(201).send({
       message: "Group created successfully!",
