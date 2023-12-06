@@ -27,6 +27,12 @@ module.exports = (app) => {
   );
   router.post("/verify/razorpay", [StoreRABC], ordersController.verify);
 
+  router.post(
+    "/checkout/wallet",
+    ordersMiddlware.validateWalletOrder,
+    ordersController.checkOutWallet
+  );
+
   router.put("/:id/accept", ordersController.acceptOrder);
   router.put("/:id/cancel", ordersController.cancelOrder);
   router.put("/:id/deliver", ordersController.deliverOrder);

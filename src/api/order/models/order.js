@@ -12,7 +12,7 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
     },
     payment: {
-      type: DataTypes.ENUM("COD", "prepaid"),
+      type: DataTypes.ENUM("COD", "prepaid", "wallet"),
     },
     payment_id: {
       type: DataTypes.STRING,

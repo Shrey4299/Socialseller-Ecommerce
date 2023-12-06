@@ -36,6 +36,7 @@ const role = require("../api/role/models/role");
 const permission = require("../api/permission/models/permission");
 const role_permission = require("../api/permission/models/role_permission");
 const activity_log = require("../api/activity_log/models/activity_log");
+const transaction = require("../api/transaction/models/transaction");
 
 module.exports = async (sequelize) => {
   const db = {};
@@ -77,6 +78,7 @@ module.exports = async (sequelize) => {
   db.Permission = permission(sequelize);
   db.Role_permission = role_permission(sequelize);
   db.Activity_log = activity_log(sequelize);
+  db.Transaction = transaction(sequelize);
 
   db.Role.hasMany(db.User_store, { foreignKey: "RoleId", as: "users_store" });
   db.User_store.belongsTo(db.Role, { foreignKey: "RoleId", as: "role" });
@@ -251,6 +253,11 @@ module.exports = async (sequelize) => {
     as: "activity_logs",
   });
   db.Activity_log.belongsTo(db.User_store, {
+    foreignKey: "UserStoreId",
+    as: "user",
+  });
+
+  db.Transaction.belongsTo(db.User_store, {
     foreignKey: "UserStoreId",
     as: "user",
   });
