@@ -321,6 +321,27 @@ exports.checkOutWallet = async (req, res) => {
     const user = await sequelize.models.User_store.findByPk(req.UserStoreId);
     await user.update({ wallet_balance: user.wallet_balance - totalAmount });
 
+    const orderplace = await createActivityLog.createActivityLog(
+      req,
+      res,
+      "narayan",
+      "ORDER_PLACED",
+      "Order is placed successfully!"
+    );
+
+    const orderTranscations = await createTransaction.createTransaction(
+      req,
+      res,
+      "narayan",
+      "PURCHASE",
+      "CREDIT",
+      payment_id,
+      "order purchased successfully!",
+      "MONEY",
+      2442
+    );
+
+
     await Promise.all(
       variantQuantities.map(async ({ VariantId, quantity }) => {
         const variant = variants.find((v) => v.id === VariantId);
