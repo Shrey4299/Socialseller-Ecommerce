@@ -18,11 +18,6 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-
-    // premium_plan_orders: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: false,
-    // },
   });
 
   return Product_metrics;

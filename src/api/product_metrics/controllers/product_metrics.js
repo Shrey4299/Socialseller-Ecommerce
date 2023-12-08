@@ -11,12 +11,7 @@ exports.create = async (req, res) => {
     const body = req.body;
 
     // Create product metrics
-    const productMetrics = await sequelize.models.Product_metrics.create({
-      view_count: body.view_count,
-      ordered_count: body.ordered_count,
-      shares_count: body.shares_count,
-      revenue_generated: body.revenue_generated,
-    });
+    const productMetrics = await sequelize.models.Product_metrics.create(body);
 
     return res.status(200).send({
       message: "Product metrics created successfully!",

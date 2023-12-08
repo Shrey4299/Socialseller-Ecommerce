@@ -3,7 +3,7 @@ const jwt = require("../../../services/jwt");
 const { tokenError, requestError } = require("../../../services/errors");
 const dbCache = require("../../../utils/dbCache");
 
-exports.createVariantOrder = async (quantity, VariantId, OrderId, req, res) => {
+exports.createVariantOrder = async (quantity, VariantId, OrderId, req) => {
   try {
     console.log("entered in create order variant creation");
     console.log(OrderId);
@@ -22,12 +22,14 @@ exports.createVariantOrder = async (quantity, VariantId, OrderId, req, res) => {
       selling_price: variant.price * quantity,
       VariantId: VariantId,
       status: "NEW",
-    });
+    },
+    );
 
     const orderVariantLink = await sequelize.models.Order_variant_link.create({
       OrderVariantId: orderVariant.id,
       OrderId: OrderId,
-    });
+    },
+    );
   } catch (error) {
     console.error(error);
   }
@@ -40,21 +42,23 @@ exports.createOrder = async (
   AddressId,
   payment,
   variantQuantities,
-  req
+  req,
 ) => {
   try {
     const sequelize = req.db;
 
-    const orderProduct = await sequelize.models.Order.create({
-      order_id: generateOrderId(),
-      payment_order_id: razorpayOrder.id,
-      price: razorpayOrder.amount / 100,
-      UserStoreId: UserStoreId,
-      payment: payment,
-      status: "new",
-      AddressId: AddressId,
-      isPaid: false,
-    });
+    const orderProduct = await sequelize.models.Order.create(
+      {
+        order_id: generateOrderId(),
+        payment_order_id: razorpayOrder.id,
+        price: razorpayOrder.amount / 100,
+        UserStoreId: UserStoreId,
+        payment: payment,
+        status: "new",
+        AddressId: AddressId,
+        isPaid: false,
+      },
+    );
 
     await Promise.all(
       variantQuantities.map(async ({ VariantId, quantity }) => {
@@ -63,7 +67,7 @@ exports.createOrder = async (
           quantity,
           VariantId,
           orderProduct.id,
-          req
+          req,
         );
       })
     );

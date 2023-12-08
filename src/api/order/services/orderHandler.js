@@ -2,6 +2,7 @@ const firebaseAdmin = require("firebase-admin");
 const fs = require("fs");
 const ejs = require("ejs");
 const { sendOrderConfirmationEmail } = require("../../../services/emailSender");
+const { createActivityLog } = require("./createActivityLog");
 
 const dbCache = require("../../../utils/dbCache");
 const { requestError } = require("../../../services/errors");
@@ -9,19 +10,26 @@ const { requestError } = require("../../../services/errors");
 exports.handleSuccessfulOrder = async (
   client,
   razorpayOrderId,
-  razorpayPaymentId
+  razorpayPaymentId,
+  transaction,
+  req,
+  res,
 ) => {
   try {
     const OrderUpdate = await changeInOrderTable(
       client,
       razorpayOrderId,
-      razorpayPaymentId
+      razorpayPaymentId,
+      { transaction }
     );
 
     const orderVariantUpdate = await updateOrderVariant(
       razorpayOrderId,
-      client
+      client,
+      { transaction }
     );
+
+
 
     const callSendNotification = await sendNotification();
 
@@ -48,7 +56,8 @@ exports.handleSuccessfulOrder = async (
 const changeInOrderTable = async (
   client,
   razorpayOrderId,
-  razorpayPaymentId
+  razorpayPaymentId,
+  transaction
 ) => {
   try {
     const subdomain = client;
@@ -65,7 +74,8 @@ const changeInOrderTable = async (
 
     const order = await sequelize.models.Order.update(
       { isPaid: true, payment_id: razorpayPaymentId },
-      { where: { payment_order_id: razorpayOrderId } }
+      { where: { payment_order_id: razorpayOrderId } },
+      { transaction }
     );
 
     if (order) {
@@ -79,6 +89,58 @@ const changeInOrderTable = async (
   } catch (error) {
     console.error(error);
     throw error;
+  }
+};
+
+const updateOrderVariant = async (OrderId, client, transaction) => {
+  try {
+    console.log("Entered in update order variant creation");
+    console.log(OrderId);
+
+    const subdomain = client;
+    const sequelize = dbCache.get(subdomain);
+
+    if (!sequelize) {
+      throw requestError({
+        message: "Invalid Site Address",
+        details: "Requested subdomain not found",
+      });
+    }
+
+    const order = await sequelize.models.Order.findOne(
+      {
+        where: { payment_order_id: OrderId },
+      },
+      { transaction }
+    );
+
+    const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
+      {
+        where: { OrderId: order.id },
+      },
+      { transaction }
+    );
+
+    if (!orderVariantLinks || orderVariantLinks.length === 0) {
+      throw requestError({
+        message: "Order_variant_links not found for OrderId",
+        details: OrderId,
+      });
+    }
+
+    await Promise.all(
+      orderVariantLinks.map(async (orderVariantLink) => {
+        await sequelize.models.Order_variant.update(
+          { status: "PROCESSING" },
+          { where: { id: orderVariantLink.OrderVariantId } },
+          { transaction }
+        );
+      })
+    );
+
+    console.log("Order_variant updated successfully");
+  } catch (error) {
+    console.error(error);
   }
 };
 
@@ -102,52 +164,3 @@ const sendNotification = async () => {
     console.error("Error sending notification:", error);
   }
 };
-
-const updateOrderVariant = async (OrderId, client) => {
-  try {
-    console.log("Entered in update order variant creation");
-    console.log(OrderId);
-
-    const subdomain = client;
-    const sequelize = dbCache.get(subdomain);
-
-    if (!sequelize) {
-      throw requestError({
-        message: "Invalid Site Address",
-        details: "Requested subdomain not found",
-      });
-    }
-
-    const order = await sequelize.models.Order.findOne({
-      where: { payment_order_id: OrderId },
-    });
-
-    const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
-      {
-        where: { OrderId: order.id },
-      }
-    );
-
-    if (!orderVariantLinks || orderVariantLinks.length === 0) {
-      throw requestError({
-        message: "Order_variant_links not found for OrderId",
-        details: OrderId,
-      });
-    }
-
-    await Promise.all(
-      orderVariantLinks.map(async (orderVariantLink) => {
-        await sequelize.models.Order_variant.update(
-          { status: "PROCESSING" },
-          { where: { id: orderVariantLink.OrderVariantId } }
-        );
-      })
-    );
-
-    console.log("Order_variant updated successfully");
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-

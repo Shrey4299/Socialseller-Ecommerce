@@ -12,7 +12,8 @@ exports.createTransaction = async (
   txnId,
   remark,
   mode,
-  amount
+  amount,
+  transaction // Add transaction parameter
 ) => {
   try {
     const subdomain = client;
@@ -49,11 +50,13 @@ exports.createTransaction = async (
       UserStoreId: userId,
     };
 
-    const transaction = await sequelize.models.Transaction.create(
-      transactionData
+    // Use the provided transaction object when creating the transaction record
+    const transactionRecord = await sequelize.models.Transaction.create(
+      transactionData,
+      // { transaction }
     );
 
-    return transaction;
+    return transactionRecord;
   } catch (error) {
     console.error(error);
     throw error;

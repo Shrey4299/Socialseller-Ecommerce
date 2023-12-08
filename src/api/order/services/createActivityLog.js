@@ -8,14 +8,25 @@ const createBody = (description, event, userId) => ({
   UserStoreId: userId,
 });
 
-exports.createActivityLog = async (req, res, client, event, description) => {
+exports.createActivityLog = async (
+  req,
+  res,
+  client,
+  event,
+  description,
+  transaction
+) => {
   try {
+    console.log("entered createActivityLog");
+    console.log(client);
     const subdomain = client;
     const sequelize = dbCache.get(subdomain);
     const token = jwt.verify(req);
+
     if (token.error) {
       return res.status(401).send(tokenError(token));
     }
+
     const findUser = await sequelize.models.User_store.findByPk(token.id);
 
     if (!findUser) {
@@ -26,12 +37,13 @@ exports.createActivityLog = async (req, res, client, event, description) => {
         })
       );
     }
-    const userId = findUser.id;
 
+    const userId = findUser.id;
     const body = createBody(description, event, userId);
+
     const activity_log = await sequelize.models.Activity_log.create(body);
   } catch (error) {
-    console.error(error);
+    console.error("Error in createActivityLog:", error);
     // return res.status(500).send({ error: "Failed to create an activity log" });
   }
 };

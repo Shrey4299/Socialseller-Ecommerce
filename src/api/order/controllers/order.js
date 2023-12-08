@@ -8,6 +8,7 @@ const productMetricsService = require("../../../services/productMetricsUpdate");
 const { handleSuccessfulOrder } = require("../services/orderHandler");
 const {
   createWalletVariantOrder,
+  updateProductMetrics,
   handleWalletOrder,
   generateTransactionId,
   generateOrderId,
@@ -15,8 +16,8 @@ const {
 const orederVariantCreation = require("../services/ordervariantCreation.js");
 const { Op } = require("sequelize");
 const { getPagination, getMeta } = require("../../../services/pagination");
-const createActivityLog = require("../services/createActivityLog");
-const createTransaction = require("../services/createTransaction");
+const { createActivityLog } = require("../services/createActivityLog");
+const { createTransaction } = require("../services/createTransaction");
 const { tokenError, requestError } = require("../../../services/errors");
 
 exports.create = async (req, res) => {
@@ -138,54 +139,61 @@ exports.delete = async (req, res) => {
 };
 
 exports.checkOut = async (req, res) => {
+  const sequelize = req.db;
+  const client = req.hostname.split(".")[0];
+  console.log(client + " this is client");
+
   try {
-    console.log("Entered in razorpay checkout");
-    const sequelize = req.db;
-    const client = req.hostname.split(".")[0];
-    console.log(client + " this is client");
+    await sequelize.transaction(async (transaction) => {
+      console.log("Entered in razorpay checkout");
 
-    const UserStoreId = await orederVariantCreation.getUserId(req, res);
+      const UserStoreId = await orederVariantCreation.getUserId(
+        req,
+        res,
+        transaction
+      );
 
-    const { payment, variantQuantities, AddressId } = req.body;
+      const { payment, variantQuantities, AddressId } = req.body;
 
-    if (!variantQuantities || !Array.isArray(variantQuantities)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid variantQuantities in the request body" });
-    }
+      if (!variantQuantities || !Array.isArray(variantQuantities)) {
+        return res
+          .status(400)
+          .json({ error: "Invalid variantQuantities in the request body" });
+      }
 
-    const variants = await sequelize.models.Variant.findAll();
+      const variants = await sequelize.models.Variant.findAll({ transaction });
 
-    const totalAmount = variantQuantities.reduce(
-      (sum, { VariantId, quantity }) => {
-        const variant = variants.find((v) => v.id === VariantId);
-        return sum + variant.price * quantity;
-      },
-      0
-    );
+      const totalAmount = variantQuantities.reduce(
+        (sum, { VariantId, quantity }) => {
+          const variant = variants.find((v) => v.id === VariantId);
+          return sum + variant.price * quantity;
+        },
+        0
+      );
 
-    console.log(totalAmount + " this is total amount");
+      console.log(totalAmount + " this is total amount");
 
-    const options = {
-      amount: totalAmount * 100,
-      currency: "INR",
-      receipt: "RCT" + require("uid").uid(10).toUpperCase(),
-    };
+      const options = {
+        amount: totalAmount * 100,
+        currency: "INR",
+        receipt: "RCT" + require("uid").uid(10).toUpperCase(),
+      };
 
-    const razorpayOrder = await razorpay.orders.create(options);
+      const razorpayOrder = await razorpay.orders.create(options);
 
-    await orederVariantCreation.createOrder(
-      razorpayOrder,
-      variants,
-      UserStoreId,
-      AddressId,
-      payment,
-      variantQuantities,
-      req
-    );
+      await orederVariantCreation.createOrder(
+        razorpayOrder,
+        variants,
+        UserStoreId,
+        AddressId,
+        payment,
+        variantQuantities,
+        req
+      );
 
-    const orderWithClient = { ...razorpayOrder, client };
-    res.status(200).send(orderWithClient);
+      const orderWithClient = { ...razorpayOrder, client };
+      res.status(200).send(orderWithClient);
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "Failed to fetch subscription" });
@@ -193,6 +201,8 @@ exports.checkOut = async (req, res) => {
 };
 
 exports.verify = async (req, res) => {
+  const sequelize = req.db;
+
   try {
     console.error("Entered in razorpay verify");
     console.info(`${req.body.client} - This is the client in verify`);
@@ -203,7 +213,6 @@ exports.verify = async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
     } = req.body;
-    const sequelize = req.db;
 
     console.log(razorpay_order_id + razorpay_payment_id);
     const generateSignature = crypto
@@ -211,56 +220,65 @@ exports.verify = async (req, res) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (generateSignature === razorpay_signature) {
-      try {
-        const user = await sequelize.models.User.findOne({
-          where: { username: client },
-        });
+    await sequelize.transaction(async (transaction) => {
+      if (generateSignature === razorpay_signature) {
+        try {
+          const user = await sequelize.models.User.findOne({
+            where: { username: client },
+            transaction,
+          });
 
-        const payment_log = await sequelize.models.Payment_log.update(
-          { client: client, UserId: user.id },
-          { where: { order_id: razorpay_order_id } }
+          await sequelize.models.Payment_log.update(
+            { client: client, UserId: user.id },
+            { where: { order_id: razorpay_order_id }, transaction }
+          );
+        } catch (error) {
+          console.error("Error updating payment log:", error);
+          throw error;
+        }
+
+        const result = await handleSuccessfulOrder(
+          client,
+          razorpay_order_id,
+          razorpay_payment_id,
+          { transaction },
+          req,
+          res
         );
-      } catch (error) {
-        console.error("Error updating payment log:", error);
-        throw error;
+
+        const orderplace = await createActivityLog(
+          req,
+          res,
+          client,
+          "ORDER_PLACED",
+          "Order is placed successfully!",
+          { transaction }
+        );
+
+        const orderTranscations = await createTransaction(
+          req,
+          res,
+          client,
+          "PURCHASE",
+          "CREDIT",
+          razorpay_payment_id,
+          "order purchased successfully!",
+          "MONEY",
+          2442,
+          { transaction }
+        );
+
+        return res.status(200).send(result);
+      } else {
+        return res.status(400).send(
+          requestError({
+            message: "Bad Request!",
+            details:
+              "razorpay_signature and generated signature did not match!",
+          })
+        );
       }
-
-      const result = await handleSuccessfulOrder(
-        client,
-        razorpay_order_id,
-        razorpay_payment_id
-      );
-
-      const orderplace = await createActivityLog.createActivityLog(
-        req,
-        res,
-        client,
-        "ORDER_PLACED",
-        "Order is placed successfully!"
-      );
-
-      const orderTranscations = await createTransaction.createTransaction(
-        req,
-        res,
-        client,
-        "PURCHASE",
-        "CREDIT",
-        razorpay_payment_id,
-        "order purchased successfully!",
-        "MONEY",
-        2442
-      );
-
-      return res.status(200).send(result);
-    } else {
-      return res.status(400).send(
-        requestError({
-          message: "Bad Request!",
-          details: "razorpay_signature and generated signature did not match!",
-        })
-      );
-    }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({ error: "Internal Server Error" });
@@ -294,67 +312,91 @@ exports.webhook = async (req, res) => {
 };
 
 exports.checkOutWallet = async (req, res) => {
+  const sequelize = req.db;
+  const client = req.hostname.split(".")[0];
+
   try {
     console.log("Entered in wallet checkout");
 
-    const sequelize = req.db;
-    const { payment, AddressId, variantQuantities } = req.body;
+    await sequelize.transaction(async (t) => {
+      const { payment, AddressId, variantQuantities } = req.body;
 
-    const payment_id = generateTransactionId();
-    const variants = await sequelize.models.Variant.findAll();
-    const totalAmount = req.totalAmount;
+      const payment_id = generateTransactionId();
+      const totalAmount = req.totalAmount;
+      const variants = await sequelize.models.Variant.findAll();
 
-    const orderProduct = await sequelize.models.Order.create({
-      order_id: generateOrderId(),
-      payment_order_id: payment_id,
-      payment_id: payment_id,
-      price: totalAmount,
-      UserStoreId: req.UserStoreId,
-      payment,
-      status: "processing",
-      AddressId,
-      isPaid: true,
-    });
+      const orderProduct = await sequelize.models.Order.create(
+        {
+          order_id: generateOrderId(),
+          payment_order_id: payment_id,
+          payment_id: payment_id,
+          price: totalAmount,
+          UserStoreId: req.UserStoreId,
+          payment,
+          status: "processing",
+          AddressId,
+          isPaid: true,
+        },
+        { transaction: t }
+      );
 
-    await handleWalletOrder(req, res);
+      const orderplace = await createActivityLog(
+        req,
+        res,
+        client,
+        "ORDER_PLACED",
+        "Order is placed successfully!",
+        t
+      );
 
-    const user = await sequelize.models.User_store.findByPk(req.UserStoreId);
-    await user.update({ wallet_balance: user.wallet_balance - totalAmount });
+      const orderTranscations = await createTransaction(
+        req,
+        res,
+        client,
+        "PURCHASE",
+        "CREDIT",
+        payment_id,
+        "order purchased successfully!",
+        "MONEY",
+        totalAmount,
+        t // Pass the transaction object
+      );
 
-    const orderplace = await createActivityLog.createActivityLog(
-      req,
-      res,
-      "narayan",
-      "ORDER_PLACED",
-      "Order is placed successfully!"
-    );
+      await Promise.all(
+        variantQuantities.map(async ({ VariantId, quantity }) => {
+          const variant = variants.find((v) => v.id === VariantId);
+          await createWalletVariantOrder(
+            quantity,
+            VariantId,
+            orderProduct.id,
+            req,
+            { transaction: t }
+          );
+          await updateProductMetrics(
+            quantity,
+            VariantId,
+            orderProduct.id,
+            req,
+            { transaction: t }
+          );
+        })
+      );
 
-    const orderTranscations = await createTransaction.createTransaction(
-      req,
-      res,
-      "narayan",
-      "PURCHASE",
-      "CREDIT",
-      payment_id,
-      "order purchased successfully!",
-      "MONEY",
-      2442
-    );
+      const user = await sequelize.models.User_store.findByPk(req.UserStoreId);
+      // const user = await sequelize.models.User_store.findByPk(1);
 
-
-    await Promise.all(
-      variantQuantities.map(async ({ VariantId, quantity }) => {
-        const variant = variants.find((v) => v.id === VariantId);
-        await createWalletVariantOrder(
-          quantity,
-          VariantId,
-          orderProduct.id,
-          req
+      if (user) {
+        await user.update(
+          { wallet_balance: user.wallet_balance - totalAmount },
+          { transaction: t }
         );
-      })
-    );
+        await handleWalletOrder(req, res, sequelize, totalAmount, t);
+      } else {
+        res.status(500).send({ error: "Failed to fetch user order" });
+      }
 
-    res.status(200).send(orderProduct);
+      res.status(200).send(orderProduct);
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "Failed to create order" });

@@ -7,7 +7,7 @@ const Joi = require("../middlewares/product");
 
 // Define routes for the "Post" resource
 module.exports = (app) => {
-  router.post("/products/", [store_RBAC], productController.create);
+  router.post("/products/", productController.create);
   router.get("/products/", productController.find);
   router.get("/products/:id", productController.findOne);
   router.put(

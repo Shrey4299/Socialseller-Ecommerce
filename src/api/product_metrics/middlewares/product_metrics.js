@@ -6,9 +6,7 @@ const productMetricsSchema = Joi.object({
   ordered_count: Joi.number().integer().min(0).required(),
   shares_count: Joi.number().integer().min(0).required(),
   revenue_generated: Joi.number().min(0).required(),
-  profit_margin: Joi.number().min(0).required(),
-  premium_plan_orders: Joi.number().integer().min(0).required(),
-  ProductId: Joi.number().optional(),
+  ProductId: Joi.number(),
 });
 
 exports.validateProductMetrics = (req, res, next) => {

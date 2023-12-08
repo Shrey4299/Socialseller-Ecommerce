@@ -29,7 +29,13 @@ const sendNotification = async () => {
   }
 };
 
-const handleWalletOrder = async (req, res) => {
+const handleWalletOrder = async (
+  req,
+  res,
+  sequelize,
+  totalAmount,
+  transaction
+) => {
   try {
     await sendNotification();
 
@@ -49,6 +55,9 @@ const handleWalletOrder = async (req, res) => {
     await sendOrderConfirmationEmail(email, renderedContent);
   } catch (error) {
     console.error(error);
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
+    res.status(500).send({ error: "Failed to handle wallet order" });
   }
 };
 
@@ -57,7 +66,7 @@ const createWalletVariantOrder = async (
   VariantId,
   OrderId,
   req,
-  res
+  { transaction, res }
 ) => {
   try {
     console.log("entered in create order variant creation");
@@ -66,29 +75,101 @@ const createWalletVariantOrder = async (
     const variant = await sequelize.models.Variant.findByPk(VariantId);
 
     if (!variant) {
+      // Rollback the transaction in case of an error
+      await transaction.rollback();
       return res.status(404).send({ error: "Variant not found" });
     }
 
-    await variant.update({ quantity: variant.quantity - quantity });
+    await variant.update(
+      { quantity: variant.quantity - quantity },
+      { transaction }
+    );
 
-    const orderVariant = await sequelize.models.Order_variant.create({
-      quantity,
-      price: variant.price * quantity,
-      selling_price: variant.price * quantity,
-      VariantId,
-      status: "PROCESSING",
-    });
+    const orderVariant = await sequelize.models.Order_variant.create(
+      {
+        quantity,
+        price: variant.price * quantity,
+        selling_price: variant.price * quantity,
+        VariantId,
+        status: "PROCESSING",
+      },
+      { transaction }
+    );
 
-    await sequelize.models.Order_variant_link.create({
-      OrderVariantId: orderVariant.id,
-      OrderId,
-    });
+    await sequelize.models.Order_variant_link.create(
+      {
+        OrderVariantId: orderVariant.id,
+        OrderId,
+      },
+      { transaction }
+    );
   } catch (error) {
     console.error(error);
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
   }
 };
 
+const updateProductMetrics = async (
+  quantity,
+  VariantId,
+  OrderId,
+  req,
+  { transaction, res }
+) => {
+  try {
+    console.log("entered in update product metrics");
+    const sequelize = req.db;
+    const variant = await sequelize.models.Variant.findByPk(VariantId);
 
+    if (!variant) {
+      await transaction.rollback();
+      console.log("variant not found");
+      return res.status(404).send({ error: "Variant not found" });
+    }
+
+    const product = await sequelize.models.Product.findByPk(variant.ProductId);
+    if (!product) {
+      await transaction.rollback();
+      console.log("product not found");
+      return res.status(404).send({ error: "Product not found" });
+    }
+
+    const existingProductMetrics =
+      await sequelize.models.Product_metrics.findOne({
+        ProductId: product.ProductId,
+      });
+
+    if (existingProductMetrics) {
+      await existingProductMetrics.update(
+        {
+          view_count: existingProductMetrics.view_count + 1,
+          ordered_count: existingProductMetrics.ordered_count + 1,
+          shares_count: existingProductMetrics.shares_count + 1,
+          revenue_generated:
+            existingProductMetrics.revenue_generated + variant.price * quantity,
+        },
+        { transaction }
+      );
+    } else {
+      // Change const to let for productMetrics to have broader scope
+      let productMetrics = await sequelize.models.Product_metrics.create(
+        {
+          ProductId: product.id,
+          view_count: 1,
+          ordered_count: 1,
+          shares_count: 1,
+          revenue_generated: variant.price * quantity,
+        },
+        { transaction }
+      );
+      // Now you can use productMetrics outside of this block if needed
+    }
+  } catch (error) {
+    console.error(error);
+    // await transaction.rollback();
+  }
+};
 
 const generateOrderId = () => {
   const order_id_prefix = "ORD";
@@ -110,84 +191,11 @@ const generateTransactionId = () => {
   return transactionId.substring(0, 13);
 };
 
-const updatePaymetLog = async (req, res) => {
-  console.log("entered in update payment log");
-  const sequelize = dbCache.get("main_instance");
-
-  const webhookBody = {
-    entity: "event",
-    account_id: "acc_EqZnZU1YDmNcj0",
-    event: "payment.captured",
-    contains: ["payment"],
-    payload: {
-      payment: {
-        entity: {
-          id: "pay_Mng2IqTQuvgIZ8",
-          entity: "payment",
-          amount: 20298,
-          currency: "INR",
-          status: "captured",
-          order_id: "order_Mng23S5rfeQvfT",
-          invoice_id: null,
-          international: false,
-          method: "wallet",
-          amount_refunded: 0,
-          refund_status: null,
-          captured: true,
-          description: "This is test Transactions",
-          card_id: null,
-          bank: null,
-          wallet: "airtelmoney",
-          vpa: null,
-          email: "void@razorpay.com",
-          contact: "+918349988146",
-          notes: [],
-          fee: 480,
-          tax: 74,
-          error_code: null,
-          error_description: null,
-          error_source: null,
-          error_step: null,
-          error_reason: null,
-          acquirer_data: {
-            transaction_id: null,
-          },
-          created_at: 1697197008,
-          base_amount: 20298,
-        },
-      },
-    },
-    created_at: 1697197010,
-  };
-
-  const payload = webhookBody.payload;
-
-  const Payment_log = await sequelize.models.Payment_log.create({
-    order_id: payload.payment.entity.order_id,
-    payment_id: payload.payment.entity.id,
-    amount: payload.payment.entity.amount,
-    amount_refunded: payload.payment.entity.amount_refunded,
-    currency: payload.payment.entity.currency,
-    status: payload.payment.entity.status,
-    method: payload.payment.entity.method,
-    card_id: payload.payment.entity.card_id,
-    card: null,
-    last4: null,
-    network: null,
-    bank: null,
-    wallet: null,
-    vpa: payload.payment.entity.vpa,
-    email: payload.payment.entity.email,
-    contact: payload.payment.entity.contact,
-    notes: payload.payment.entity.contact,
-  });
-};
-
 module.exports = {
   handleWalletOrder,
   createWalletVariantOrder,
+  updateProductMetrics,
   sendNotification,
   generateOrderId,
   generateTransactionId,
-  
 };
