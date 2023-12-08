@@ -191,12 +191,12 @@ exports.checkOut = async (req, res) => {
         req
       );
 
-      const orderWithClient = { ...razorpayOrder, client };
+      const orderWithClient = { ...razorpayOrder, client, totalAmount };
       res.status(200).send(orderWithClient);
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: "Failed to fetch subscription" });
+    res.status(500).send({ error: "Failed to create order" });
   }
 };
 
@@ -209,6 +209,7 @@ exports.verify = async (req, res) => {
 
     const {
       client,
+      totalAmount,
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -264,9 +265,11 @@ exports.verify = async (req, res) => {
           razorpay_payment_id,
           "order purchased successfully!",
           "MONEY",
-          2442,
+          totalAmount,
           { transaction }
         );
+
+        
 
         return res.status(200).send(result);
       } else {

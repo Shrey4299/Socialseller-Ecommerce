@@ -58,6 +58,7 @@ const Subscription = () => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   client: order.client,
+                  totalAmount: order.totalAmount,
                 },
                 {
                   headers: {

@@ -117,6 +117,21 @@ exports.findOne = async (req, res) => {
         .status(400)
         .send(requestError({ message: "Invalid Id to fetch product" }));
     }
+
+    const existingProductMetrics =
+      await sequelize.models.Product_metrics.findOne({
+        ProductId: product.ProductId,
+      });
+
+    if (existingProductMetrics) {
+      await existingProductMetrics.update({
+        view_count: existingProductMetrics.view_count + 1,
+      });
+    } else {
+      let productMetrics = await sequelize.models.Product_metrics.create({
+        view_count: 1,
+      });
+    }
     return res.status(200).send(product);
   } catch (error) {
     console.error(error);
@@ -289,7 +304,6 @@ exports.findNRandomInCategory = async (req, res) => {
   try {
     const sequelize = req.db;
     const n = req.params.n || 1;
-    
 
     console.log("this is a random" + n);
 

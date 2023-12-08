@@ -3,7 +3,7 @@ const jwt = require("../../../services/jwt");
 const { tokenError, requestError } = require("../../../services/errors");
 const dbCache = require("../../../utils/dbCache");
 
-exports.createVariantOrder = async (quantity, VariantId, OrderId, req) => {
+const createVariantOrder = async (quantity, VariantId, OrderId, req) => {
   try {
     console.log("entered in create order variant creation");
     console.log(OrderId);
@@ -22,16 +22,70 @@ exports.createVariantOrder = async (quantity, VariantId, OrderId, req) => {
       selling_price: variant.price * quantity,
       VariantId: VariantId,
       status: "NEW",
-    },
-    );
+    });
 
     const orderVariantLink = await sequelize.models.Order_variant_link.create({
       OrderVariantId: orderVariant.id,
       OrderId: OrderId,
-    },
-    );
+    });
   } catch (error) {
     console.error(error);
+  }
+};
+
+const updateProductMetrics = async (
+  quantity,
+  VariantId,
+  OrderId,
+  req,
+) => {
+  try {
+    console.log("entered in update product metrics");
+    const sequelize = req.db;
+    const variant = await sequelize.models.Variant.findByPk(VariantId);
+
+    if (!variant) {
+      console.log("variant not found");
+      return res.status(404).send({ error: "Variant not found" });
+    }
+
+    const product = await sequelize.models.Product.findByPk(variant.ProductId);
+    if (!product) {
+      console.log("product not found");
+      return res.status(404).send({ error: "Product not found" });
+    }
+
+    const existingProductMetrics =
+      await sequelize.models.Product_metrics.findOne({
+        ProductId: product.ProductId,
+      });
+
+    if (existingProductMetrics) {
+      await existingProductMetrics.update(
+        {
+          view_count: existingProductMetrics.view_count + 1,
+          ordered_count: existingProductMetrics.ordered_count + 1,
+          shares_count: existingProductMetrics.shares_count + 1,
+          revenue_generated:
+            existingProductMetrics.revenue_generated + variant.price * quantity,
+        },
+      );
+    } else {
+      // Change const to let for productMetrics to have broader scope
+      let productMetrics = await sequelize.models.Product_metrics.create(
+        {
+          ProductId: product.id,
+          view_count: 1,
+          ordered_count: 1,
+          shares_count: 1,
+          revenue_generated: variant.price * quantity,
+        },
+      );
+      // Now you can use productMetrics outside of this block if needed
+    }
+  } catch (error) {
+    console.error(error);
+    // await transaction.rollback();
   }
 };
 
@@ -42,33 +96,32 @@ exports.createOrder = async (
   AddressId,
   payment,
   variantQuantities,
-  req,
+  req
 ) => {
   try {
     const sequelize = req.db;
 
-    const orderProduct = await sequelize.models.Order.create(
-      {
-        order_id: generateOrderId(),
-        payment_order_id: razorpayOrder.id,
-        price: razorpayOrder.amount / 100,
-        UserStoreId: UserStoreId,
-        payment: payment,
-        status: "new",
-        AddressId: AddressId,
-        isPaid: false,
-      },
-    );
+    const orderProduct = await sequelize.models.Order.create({
+      order_id: generateOrderId(),
+      payment_order_id: razorpayOrder.id,
+      price: razorpayOrder.amount / 100,
+      UserStoreId: UserStoreId,
+      payment: payment,
+      status: "new",
+      AddressId: AddressId,
+      isPaid: false,
+    });
 
     await Promise.all(
       variantQuantities.map(async ({ VariantId, quantity }) => {
         const variant = variants.find((v) => v.id === VariantId);
-        await exports.createVariantOrder(
+        await createVariantOrder(
           quantity,
           VariantId,
           orderProduct.id,
-          req,
+          req
         );
+        await updateProductMetrics(quantity, VariantId, orderProduct.id, req);
       })
     );
   } catch (error) {
@@ -93,7 +146,7 @@ exports.getUserId = async (req, res) => {
     );
   }
 
-  console.log(findUser.id + "this is user id")
+  console.log(findUser.id + "this is user id");
   return findUser.id;
 };
 
