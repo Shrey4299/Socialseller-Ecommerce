@@ -3,7 +3,7 @@ const jwt = require("../../../services/jwt");
 const { tokenError, requestError } = require("../../../services/errors");
 const dbCache = require("../../../utils/dbCache");
 
-const createVariantOrder = async (quantity, VariantId, OrderId, req) => {
+const createVariantOrder = async (quantity, VariantId, OrderId, req, t) => {
   try {
     console.log("entered in create order variant creation");
     console.log(OrderId);
@@ -14,31 +14,35 @@ const createVariantOrder = async (quantity, VariantId, OrderId, req) => {
       return res.status(404).send({ error: "Variant not found" });
     }
 
-    await variant.update({ quantity: variant.quantity - quantity });
+    await variant.update(
+      { quantity: variant.quantity - quantity },
+      { transaction: t }
+    );
 
-    const orderVariant = await sequelize.models.Order_variant.create({
-      quantity: quantity,
-      price: variant.price * quantity,
-      selling_price: variant.price * quantity,
-      VariantId: VariantId,
-      status: "NEW",
-    });
+    const orderVariant = await sequelize.models.Order_variant.create(
+      {
+        quantity: quantity,
+        price: variant.price * quantity,
+        selling_price: variant.price * quantity,
+        VariantId: VariantId,
+        status: "NEW",
+      },
+      { transaction: t }
+    );
 
-    const orderVariantLink = await sequelize.models.Order_variant_link.create({
-      OrderVariantId: orderVariant.id,
-      OrderId: OrderId,
-    });
+    const orderVariantLink = await sequelize.models.Order_variant_link.create(
+      {
+        OrderVariantId: orderVariant.id,
+        OrderId: OrderId,
+      },
+      { transaction: t }
+    );
   } catch (error) {
     console.error(error);
   }
 };
 
-const updateProductMetrics = async (
-  quantity,
-  VariantId,
-  OrderId,
-  req,
-) => {
+const updateProductMetrics = async (quantity, VariantId, req, t) => {
   try {
     console.log("entered in update product metrics");
     const sequelize = req.db;
@@ -69,6 +73,7 @@ const updateProductMetrics = async (
           revenue_generated:
             existingProductMetrics.revenue_generated + variant.price * quantity,
         },
+        { transaction: t }
       );
     } else {
       // Change const to let for productMetrics to have broader scope
@@ -80,6 +85,7 @@ const updateProductMetrics = async (
           shares_count: 1,
           revenue_generated: variant.price * quantity,
         },
+        { transaction: t }
       );
       // Now you can use productMetrics outside of this block if needed
     }
@@ -96,32 +102,32 @@ exports.createOrder = async (
   AddressId,
   payment,
   variantQuantities,
-  req
+  req,
+  t
 ) => {
   try {
     const sequelize = req.db;
 
-    const orderProduct = await sequelize.models.Order.create({
-      order_id: generateOrderId(),
-      payment_order_id: razorpayOrder.id,
-      price: razorpayOrder.amount / 100,
-      UserStoreId: UserStoreId,
-      payment: payment,
-      status: "new",
-      AddressId: AddressId,
-      isPaid: false,
-    });
+    const orderProduct = await sequelize.models.Order.create(
+      {
+        order_id: generateOrderId(),
+        payment_order_id: razorpayOrder.id,
+        price: razorpayOrder.amount / 100,
+        UserStoreId: UserStoreId,
+        payment: payment,
+        status: "new",
+        AddressId: AddressId,
+        isPaid: false,
+      },
+      { transaction: t } // Use the provided transaction if available
+    );
 
     await Promise.all(
       variantQuantities.map(async ({ VariantId, quantity }) => {
         const variant = variants.find((v) => v.id === VariantId);
-        await createVariantOrder(
-          quantity,
-          VariantId,
-          orderProduct.id,
-          req
-        );
-        await updateProductMetrics(quantity, VariantId, orderProduct.id, req);
+        await createVariantOrder(quantity, VariantId, orderProduct.id, req, t);
+
+        await updateProductMetrics(quantity, VariantId, req,t);
       })
     );
   } catch (error) {
@@ -129,6 +135,7 @@ exports.createOrder = async (
     throw error;
   }
 };
+
 exports.getUserId = async (req, res) => {
   const sequelize = req.db;
   const token = jwt.verify(req);

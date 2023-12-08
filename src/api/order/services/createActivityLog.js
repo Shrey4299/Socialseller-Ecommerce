@@ -8,14 +8,7 @@ const createBody = (description, event, userId) => ({
   UserStoreId: userId,
 });
 
-exports.createActivityLog = async (
-  req,
-  res,
-  client,
-  event,
-  description,
-  transaction
-) => {
+exports.createActivityLog = async (req, res, client, event, description, t) => {
   try {
     console.log("entered createActivityLog");
     console.log(client);
@@ -41,7 +34,9 @@ exports.createActivityLog = async (
     const userId = findUser.id;
     const body = createBody(description, event, userId);
 
-    const activity_log = await sequelize.models.Activity_log.create(body);
+    const activity_log = await sequelize.models.Activity_log.create(body, {
+      transaction: t,
+    });
   } catch (error) {
     console.error("Error in createActivityLog:", error);
     // return res.status(500).send({ error: "Failed to create an activity log" });

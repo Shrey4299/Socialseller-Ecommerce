@@ -144,14 +144,10 @@ exports.checkOut = async (req, res) => {
   console.log(client + " this is client");
 
   try {
-    await sequelize.transaction(async (transaction) => {
+    await sequelize.transaction(async (t) => {
       console.log("Entered in razorpay checkout");
 
-      const UserStoreId = await orederVariantCreation.getUserId(
-        req,
-        res,
-        transaction
-      );
+      const UserStoreId = await orederVariantCreation.getUserId(req, res);
 
       const { payment, variantQuantities, AddressId } = req.body;
 
@@ -161,7 +157,7 @@ exports.checkOut = async (req, res) => {
           .json({ error: "Invalid variantQuantities in the request body" });
       }
 
-      const variants = await sequelize.models.Variant.findAll({ transaction });
+      const variants = await sequelize.models.Variant.findAll();
 
       const totalAmount = variantQuantities.reduce(
         (sum, { VariantId, quantity }) => {
@@ -188,7 +184,8 @@ exports.checkOut = async (req, res) => {
         AddressId,
         payment,
         variantQuantities,
-        req
+        req,
+        t
       );
 
       const orderWithClient = { ...razorpayOrder, client, totalAmount };
@@ -215,13 +212,12 @@ exports.verify = async (req, res) => {
       razorpay_signature,
     } = req.body;
 
-    console.log(razorpay_order_id + razorpay_payment_id);
     const generateSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    await sequelize.transaction(async (transaction) => {
+    await sequelize.transaction(async (t) => {
       if (generateSignature === razorpay_signature) {
         try {
           const user = await sequelize.models.User.findOne({
@@ -231,7 +227,8 @@ exports.verify = async (req, res) => {
 
           await sequelize.models.Payment_log.update(
             { client: client, UserId: user.id },
-            { where: { order_id: razorpay_order_id }, transaction }
+            { where: { order_id: razorpay_order_id } },
+            { transaction: t }
           );
         } catch (error) {
           console.error("Error updating payment log:", error);
@@ -268,8 +265,6 @@ exports.verify = async (req, res) => {
           totalAmount,
           { transaction }
         );
-
-        
 
         return res.status(200).send(result);
       } else {
