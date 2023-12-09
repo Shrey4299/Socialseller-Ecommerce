@@ -8,7 +8,14 @@ const createBody = (description, event, userId) => ({
   UserStoreId: userId,
 });
 
-exports.createActivityLog = async (req, res, client, event, description, t) => {
+exports.createActivityLog = async (
+  req,
+  res,
+  client,
+  event,
+  description
+  // t
+) => {
   try {
     console.log("entered createActivityLog");
     console.log(client);
@@ -35,7 +42,7 @@ exports.createActivityLog = async (req, res, client, event, description, t) => {
     const body = createBody(description, event, userId);
 
     const activity_log = await sequelize.models.Activity_log.create(body, {
-      transaction: t,
+      // transaction: t,
     });
   } catch (error) {
     console.error("Error in createActivityLog:", error);

@@ -222,7 +222,6 @@ exports.verify = async (req, res) => {
         try {
           const user = await sequelize.models.User.findOne({
             where: { username: client },
-            transaction,
           });
 
           await sequelize.models.Payment_log.update(
@@ -239,7 +238,7 @@ exports.verify = async (req, res) => {
           client,
           razorpay_order_id,
           razorpay_payment_id,
-          { transaction },
+          t,
           req,
           res
         );
@@ -250,7 +249,7 @@ exports.verify = async (req, res) => {
           client,
           "ORDER_PLACED",
           "Order is placed successfully!",
-          { transaction }
+          // t
         );
 
         const orderTranscations = await createTransaction(
@@ -263,7 +262,7 @@ exports.verify = async (req, res) => {
           "order purchased successfully!",
           "MONEY",
           totalAmount,
-          { transaction }
+          // t
         );
 
         return res.status(200).send(result);

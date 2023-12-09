@@ -11,25 +11,23 @@ exports.handleSuccessfulOrder = async (
   client,
   razorpayOrderId,
   razorpayPaymentId,
-  transaction,
+  t,
   req,
-  res,
+  res
 ) => {
   try {
     const OrderUpdate = await changeInOrderTable(
       client,
       razorpayOrderId,
       razorpayPaymentId,
-      { transaction }
+      t
     );
 
     const orderVariantUpdate = await updateOrderVariant(
       razorpayOrderId,
       client,
-      { transaction }
+      t
     );
-
-
 
     const callSendNotification = await sendNotification();
 
@@ -57,7 +55,7 @@ const changeInOrderTable = async (
   client,
   razorpayOrderId,
   razorpayPaymentId,
-  transaction
+  t
 ) => {
   try {
     const subdomain = client;
@@ -75,7 +73,7 @@ const changeInOrderTable = async (
     const order = await sequelize.models.Order.update(
       { isPaid: true, payment_id: razorpayPaymentId },
       { where: { payment_order_id: razorpayOrderId } },
-      { transaction }
+      { transaction: t }
     );
 
     if (order) {
@@ -92,7 +90,7 @@ const changeInOrderTable = async (
   }
 };
 
-const updateOrderVariant = async (OrderId, client, transaction) => {
+const updateOrderVariant = async (OrderId, client, t) => {
   try {
     console.log("Entered in update order variant creation");
     console.log(OrderId);
@@ -107,18 +105,14 @@ const updateOrderVariant = async (OrderId, client, transaction) => {
       });
     }
 
-    const order = await sequelize.models.Order.findOne(
-      {
-        where: { payment_order_id: OrderId },
-      },
-      { transaction }
-    );
+    const order = await sequelize.models.Order.findOne({
+      where: { payment_order_id: OrderId },
+    });
 
     const orderVariantLinks = await sequelize.models.Order_variant_link.findAll(
       {
         where: { OrderId: order.id },
-      },
-      { transaction }
+      }
     );
 
     if (!orderVariantLinks || orderVariantLinks.length === 0) {
@@ -133,7 +127,7 @@ const updateOrderVariant = async (OrderId, client, transaction) => {
         await sequelize.models.Order_variant.update(
           { status: "PROCESSING" },
           { where: { id: orderVariantLink.OrderVariantId } },
-          { transaction }
+          { transaction: t }
         );
       })
     );
